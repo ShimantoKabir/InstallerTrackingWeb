@@ -1,0 +1,391 @@
+<template>
+    <div class="vue-template" >
+        <div class="container-fluid" >
+            <div class="row" >
+                <div class="col-sm-12" >
+                    <div class="my-div" >
+                        <div class="my-div-head" >
+                            <div class="my-div-head-left" >
+                                <h3>Set menu permission</h3>
+                            </div>
+                            <div class="my-div-head-right" >
+                                <i v-on:click="reload" class="fas fa-sync"></i>
+                            </div>
+                        </div>
+                        <div class="my-div-head" style="border-bottom: none" >
+                            <div class="my-div-head-left" >
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <td>Select department</td>
+                                            <td>
+                                                <select v-on:change="departmentChange" v-model="selectedDepartmentId" >
+                                                    <option v-bind:value="d.oId" v-for="d in departments" >{{d.name}}</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="my-div-head-right" >
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <td><button v-on:click="save" class="my-btn" >Save <i class="fas fa-save"></i></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="my-div-body" >
+                            <div class="my-div-body-40" >
+                                <div class="smp-menu" >
+                                    <h4>Existing menu</h4>
+                                    <div v-for="(em,emi) in existingMenu" class="smp-menu-box" >
+                                        <div class="smp-menu-data" >
+                                            <h4>{{em.text}}</h4>
+                                            <div class="smp-menu-list" >
+                                                <p v-bind:class="{activeMenuStyle : clickedParentMenu === emi && clickedChildMenu === emsi && clickedSideName === 'left'}" v-for="(ems,emsi) in em.children" v-on:click="selectExistingMenu(emi,emsi,ems)" >{{ems.text}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="my-div-body-20" >
+                                <div class="smp-action" >
+                                    <button class="my-btn" v-on:click="moveMenu('right')" ><i class="fas fa-arrow-right"></i></button>
+                                    <button class="my-btn" v-on:click="moveMenu('left')" ><i class="fas fa-arrow-left"></i></button>
+                                </div>
+                            </div>
+                            <div class="my-div-body-40" >
+                                <div class="smp-menu" >
+                                    <h4>Selected menu</h4>
+                                    <div v-for="(em,emi) in selectedMenu" class="smp-menu-box" >
+                                        <div class="smp-menu-data" >
+                                            <h4>{{em.text}}</h4>
+                                            <div class="smp-menu-list" >
+                                                <div class="selected-menu-close" v-bind:class="{activeMenuStyle : clickedParentMenu === emi && clickedChildMenu === emsi && clickedSideName === 'right'}" v-for="(ems,emsi) in em.children" >
+                                                    <p v-on:click="selectSelectedMenu(emi,emsi,ems)" >{{ems.text}}</p>
+                                                    <i v-if="clickedParentMenu === emi && clickedChildMenu === emsi && clickedSideName === 'right'" v-on:click="selectedMenuRemove" class="fas fa-times-circle" ></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <notification ref="noti" ></notification>
+    </div>
+</template>
+
+<script>
+    import Notification from "../notificaiton/Notification";
+    export default {
+
+        name: "SetMenuPermission",
+        components: {Notification},
+        mounted(){
+            this.getInitialData();
+        },
+        data(){
+            return{
+                departments : [],
+                selectedDepartmentId : '',
+                existingMenu : [],
+                selectedMenu : [],
+                movingMenu : {
+                    parentPos : '',
+                    childPos : '',
+                    childItem : ''
+                },
+                clickedChildMenu : '',
+                clickedParentMenu : '',
+                clickedSideName : ''
+            }
+        },
+        methods:{
+            reload(){
+                this.getInitialData();
+            },
+            getInitialData(){
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.post(url+"/department/get-by-user",this.$store.state.userInfo)
+                .then(res=>{
+
+                    if (res.data.code===200){
+                        this.departments = res.data.list;
+                        this.selectedDepartmentId = res.data.list[0].oId;
+                        this.getMenuByDepartment(this.selectedDepartmentId,false);
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Initial data processing error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Can not get department list !',
+                            width : '30%',
+                            callBackMethod : this.getInitialData,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Initial data processing error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : 'Can not get department list !',
+                        width : '60%',
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : 400
+                    });
+                })
+
+            },
+            departmentChange(){
+
+                this.getMenuByDepartment(this.selectedDepartmentId,true);
+
+            },
+            getMenuByDepartment(selectedDepartmentId,repeat){
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.post(url+"/menu/get-by-department-id",{
+                    deptId : selectedDepartmentId
+                })
+                .then(response=>{
+                    if (response.data.code===200){
+
+                        if (repeat) {
+                            this.selectedMenu = response.data.list[0].children;
+                        }else {
+                            localStorage.setItem('existingMenu',JSON.stringify(response.data.list[0].children));
+                            this.existingMenu = JSON.parse(localStorage.getItem('existingMenu'));
+                            localStorage.removeItem('existingMenu');
+                            this.selectedMenu = response.data.list[0].children;
+                        }
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Did not get menu list',
+                            width : '30%',
+                            callBackMethod : this.getMenuByDepartment,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+                })
+                .catch(error=> {
+                    console.log(error);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Processing result',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : 'Did not get menu list',
+                        width : '30%',
+                        callBackMethod : this.getMenuByDepartment,
+                        needTryAgain : true,
+                        status : 400
+                    });
+                });
+
+            },
+            selectExistingMenu(parentPos,childPos,childItem){
+                this.clickedSideName = 'left';
+                this.clickedChildMenu = childPos;
+                this.clickedParentMenu = parentPos;
+                this.movingMenu.parentPos = parentPos;
+                this.movingMenu.childPos = childPos;
+                this.movingMenu.childItem = childItem;
+            },
+            selectSelectedMenu(parentPos,childPos,childItem){
+                this.clickedSideName = 'right';
+                this.clickedChildMenu = childPos;
+                this.clickedParentMenu = parentPos;
+                this.movingMenu.parentPos = parentPos;
+                this.movingMenu.childPos = childPos;
+                this.movingMenu.childItem = childItem;
+            },
+            moveMenu(side){
+                if (side==='left'){
+                    this.clickedSideName = 'left';
+                    let checkExistingStatus = this.checkExistMenu(this.movingMenu.childItem.id,this.existingMenu[this.movingMenu.parentPos].children);
+                    if (checkExistingStatus===1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'This menu already exist in left side',
+                            width : '30%'
+                        });
+                    } else {
+                        this.selectedMenu[this.movingMenu.parentPos].children.splice(this.movingMenu.childPos,1);
+                        this.existingMenu[this.movingMenu.parentPos].children.push(this.movingMenu.childItem);
+                        this.clickedChildMenu = this.existingMenu[this.movingMenu.parentPos].children.length-1;
+                        this.movingMenu.childPos = this.existingMenu[this.movingMenu.parentPos].children.length-1;
+                    }
+                } else {
+                    this.clickedSideName = 'right';
+                    let checkExistingStatus = this.checkExistMenu(this.movingMenu.childItem.id,this.selectedMenu[this.movingMenu.parentPos].children);
+                    if (checkExistingStatus===1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'This menu already exist in right side',
+                            width : '30%'
+                        });
+                    } else {
+                        this.existingMenu[this.movingMenu.parentPos].children.splice(this.movingMenu.childPos,1);
+                        this.selectedMenu[this.movingMenu.parentPos].children.push(this.movingMenu.childItem);
+                        this.clickedChildMenu = this.selectedMenu[this.movingMenu.parentPos].children.length-1;
+                        this.movingMenu.childPos = this.selectedMenu[this.movingMenu.parentPos].children.length-1;
+                    }
+                }
+            },
+            checkExistMenu(id,children){
+                let status = -1;
+                if (children.length>0){
+                    for (let i = 0; i < children.length; i++) {
+                        if (id===children[i].id){
+                            status = 1;
+                            break;
+                        }else {
+                            status = 0;
+                        }
+                    }
+                } else {
+                    status = 0;
+                }
+                return status;
+            },
+            selectedMenuRemove(){
+                this.selectedMenu[this.movingMenu.parentPos].children.splice(this.movingMenu.childPos,1);
+            },
+            save(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Set menu permission',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... ',
+                    width : '30%'
+                });
+                
+                let requestData = {
+                    userBeen : {
+                        id : this.$store.state.userInfo.id,
+                        deptId : this.selectedDepartmentId
+                    },
+                    intList : []
+                };
+
+                for (let i = 0; i < this.selectedMenu.length; i++) {
+                    if (this.selectedMenu[i].children.length>0){
+                        for (let j = 0; j < this.selectedMenu[i].children.length; j++) {
+                            requestData.intList.push(this.selectedMenu[i].children[j].oId);
+                        }
+                    }
+                }
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.post(url+"/menu/set-permission",requestData)
+                .then(res=>{
+                    console.log(res.data);
+                    this.getInitialData();
+                    if (res.data.code===200){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : 'Set menu permission successful !',
+                            width : '30%'
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Set menu permission unsuccessful !',
+                            width : '30%',
+                            callBackMethod : this.save,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Processing result',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : 'Set menu permission unsuccessful !',
+                        width : '30%',
+                        callBackMethod : this.save,
+                        needTryAgain : true,
+                        status : 400
+                    });
+                })
+
+            }
+        }
+    }
+</script>
+
+<style scoped>
+    .activeMenuStyle{
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 3px;
+    }
+    .smp-menu{
+        border: 1px solid lightgray;
+        margin: 20px;
+    }
+    .smp-menu > h4{
+        padding: 10px;
+        border-bottom: 1px solid lightgray;
+    }
+    .smp-menu-box{
+        padding: 15px;
+    }
+    .smp-menu-data > h4{
+        border-bottom: 1px solid lightgray;
+        padding-bottom: 2px;
+    }
+    .smp-menu-list{
+        display: flex;
+        align-items: baseline;
+        flex-direction: column;
+        margin-left: 5px;
+        padding: 5px 5px;
+    }
+    .smp-menu-list i{
+        font-size: 10px;
+    }
+    .smp-menu-list p{
+        cursor: pointer;
+        padding: 2px 5px;
+        width: 100%;
+    }
+    .smp-action {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    .smp-action > button {
+        margin: 3px;
+    }
+    .selected-menu-close{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-right: 5px
+    }
+</style>
