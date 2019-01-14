@@ -32,8 +32,6 @@
 
 <script>
 
-    // 2nd commit
-
     import LoginReg from "./../pages/LoginReg"
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";

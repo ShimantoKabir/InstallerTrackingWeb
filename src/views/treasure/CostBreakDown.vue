@@ -12,6 +12,10 @@
                                 <div class="my-tab-50" >
                                     <table>
                                         <tbody>
+                                            <tr>
+                                                <td>Name</td>
+                                                <td><input type="text" v-model="costBreakDownBn.name" /></td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -23,47 +27,244 @@
                                         <tr>
                                             <th>Serial</th>
                                             <th>Name</th>
-                                            <th>Duration</th>
-                                            <th>Cost</th>
-                                            <th>Task specialist</th>
                                             <th>Edit</th>
                                             <th>Delete</th>
                                         </tr>
                                         </thead>
                                         <tbody>
+                                            <tr v-for="(cl,i) in costBreakDownList" >
+                                                <td>{{i+1}}</td>
+                                                <td>{{cl.name}}</td>
+                                                <td><i class="fas fa-edit" v-on:click="setUpdateData(cl)" ></i></td>
+                                                <td><i class="fas fa-trash" ></i></td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                             <div v-show="selectedTab===0" class="my-tab-foot" >
-                                <button class="my-btn" v-on:click="saveCostBreakDown" >Save</button>
+                                <button v-if="costBreakDownBn.id===-1" class="my-btn" v-on:click="verifyInput('saveCostBreakDown')" >Save</button>
+                                <button v-else class="my-btn" v-on:click="update" >Update</button>
+                                <button class="my-btn" v-on:click="reset" >Reset</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <notification ref="noti" ></notification>
     </div>
 </template>
 
 <script>
+    import Notification from "../notificaiton/Notification";
     export default {
         name: "CostBreakDown",
+        components: {Notification},
         mounted(){
-
+            this.costBreakDownBn.modifiedBy = this.$store.state.userInfo.id;
+            this.getAllCostBreakDown();
         },
         data(){
             return{
                 tabButtons : ['Create cost break down','Cost break down list'],
                 selectedTab : 0,
+                costBreakDownBn :{
+                    id : -1,
+                    name : '',
+                    modifiedBy : '',
+                },
+                costBreakDownList : [],
+                needToCloseNotification : true
             }
         },
         methods:{
+            verifyInput(which){
+                if (which==='saveCostBreakDown'){
+                    if (this.costBreakDownBn.name===''){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Name field required !'
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+                }
+            },
+            getAllCostBreakDown(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                let url = this.$store.state.baseUrl;
+                this.$http.get(url+"/cost-break-down/get")
+                .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.costBreakDownList = res.data.list;
+                        if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
+
+            },
             tabBtnClickListener(i){
                 this.selectedTab = i;
             },
             saveCostBreakDown(){
 
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                let url = this.$store.state.baseUrl;
+                this.$http.post(url+"/cost-break-down/save",{
+                    costBreakDownBn : this.costBreakDownBn
+                })
+                .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+                        this.getAllCostBreakDown();
+                        this.reset();
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : res.data.code
+                        });
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
+
+            },
+            reset(){
+                this.costBreakDownBn.id = -1;
+                this.costBreakDownBn.name = '';
+                this.selectedTab = 0;
+            },
+            update(){
+                
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                let url = this.$store.state.baseUrl;
+                this.$http.post(url+"/cost-break-down/update",{
+                    costBreakDownBn : this.costBreakDownBn
+                })
+                .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+                        this.getAllCostBreakDown();
+                        this.reset();
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : res.data.code
+                        });
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveCostBreakDown,
+                            needTryAgain : true,
+                            status : res.data.code
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
+
+            },
+            setUpdateData(cl){
+                this.selectedTab = 0;
+                this.costBreakDownBn.id = cl.id;
+                this.costBreakDownBn.name = cl.name;
             }
         }
     }
