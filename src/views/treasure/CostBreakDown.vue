@@ -207,7 +207,7 @@
                 this.selectedTab = 0;
             },
             update(){
-                
+
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',

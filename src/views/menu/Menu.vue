@@ -347,8 +347,8 @@
                 });
 
                 this.$http.post(this.$store.state.baseUrl+"/menu/save",{
-                    userBeen : this.$store.state.userInfo,
-                    menuBeanList : this.menu
+                    userBn : this.$store.state.userInfo,
+                    menuBnList : this.menu
                 }).then(res=>{
 
                     console.log(res.data);

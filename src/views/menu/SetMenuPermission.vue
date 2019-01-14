@@ -279,17 +279,17 @@
                 });
                 
                 let requestData = {
-                    userBeen : {
+                    userBn : {
                         id : this.$store.state.userInfo.id,
                         deptId : this.selectedDepartmentId
                     },
-                    intList : []
+                    integerList : []
                 };
 
                 for (let i = 0; i < this.selectedMenu.length; i++) {
                     if (this.selectedMenu[i].children.length>0){
                         for (let j = 0; j < this.selectedMenu[i].children.length; j++) {
-                            requestData.intList.push(this.selectedMenu[i].children[j].oId);
+                            requestData.integerList.push(this.selectedMenu[i].children[j].oId);
                         }
                     }
                 }
