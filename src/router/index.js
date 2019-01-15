@@ -21,7 +21,6 @@ const Template = () => import('@/views/material/Template');
 const Site = () => import('@/views/material/Site');
 const WorkOrder = () => import('@/views/workorder/WorkOrder');
 const WorkOrderDetail = () => import('@/views/workorder/WorkOrderDetail');
-const CostBreakDown = () => import('@/views/treasure/CostBreakDown');
 const WorkOrderAssign = () => import('@/views/workorder/WorkOrderAssign');
 
 
@@ -159,14 +158,6 @@ export default new Router({
                     path: '/work-order-detail',
                     name: 'WorkOrderDetail',
                     component: WorkOrderDetail,
-                    meta:{
-                        requiresAuth: true
-                    }
-                },
-                {
-                    path: '/cost-break-down',
-                    name: 'CostBreakDown',
-                    component: CostBreakDown,
                     meta:{
                         requiresAuth: true
                     }
