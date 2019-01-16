@@ -39,6 +39,10 @@
                                                 </select>
                                             </td>
                                         </tr>
+                                        <tr v-if="woAssign.assignUserName" >
+                                            <td></td>
+                                            <td style="color: red" >{{woAssign.assignUserName}}</td>
+                                        </tr>
                                         <tr>
                                             <td>Date</td>
                                             <td><input type="date" v-model="woAssign.assignDate" /></td>
@@ -65,7 +69,7 @@
                                 <div class="my-tab-50" >
                                     <table>
                                         <tbody>
-                                            <tr v-for="(c,i) in woAssign.woAssignDetailList" >
+                                            <tr v-for="(c,i) in woAssign.woAssignDetailBnList" >
                                                 <td>{{c.breakDown}}</td>
                                                 <td><input v-model="c.cost" type="number" /></td>
                                                 <td><i class="fas fa-times-circle" v-on:click="removeCostBreakDown(i)" ></i></td>
@@ -83,21 +87,56 @@
                                     <table class="my-tbl" >
                                         <thead>
                                         <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
+                                            <th>Sr</th>
+                                            <th>WO</th>
+                                            <th>Assign to</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Status</th>
+                                            <th>Scope</th>
+                                            <th>Remark</th>
+                                            <th>Cost break down</th>
                                             <th>Edit</th>
                                             <th>Delete</th>
                                         </tr>
                                         </thead>
                                         <tbody>
+                                            <tr v-for="(wab,i) in woAssignBnList" >
+                                                <td>{{i+1}}</td>
+                                                <td>{{wab.workOrderName}}</td>
+                                                <td>{{wab.assignUserName}}</td>
+                                                <td>{{wab.assignDate}}</td>
+                                                <td>{{wab.assignTime}}</td>
+                                                <td>{{wab.statusName}}</td>
+                                                <td>{{wab.scope}}</td>
+                                                <td>{{wab.remark}}</td>
+                                                <td>
+                                                    <table class="my-tbl" >
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Break down</th>
+                                                                <th>Cost</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="wabd in  wab.woAssignDetailList" >
+                                                                <td>{{wabd.breakDown}}</td>
+                                                                <td>{{wabd.cost}}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                                <td><i class="fas fa-edit" v-on:click="setUpdateData(wab)" ></i></td>
+                                                <td><i class="fas fa-trash" ></i></td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                             <div v-show="selectedTab===0" class="my-tab-foot" >
                                 <button v-if="woAssign.id===-1" class="my-btn" v-on:click="save" >Save</button>
-                                <button v-else class="my-btn" v-on:click="" >Update</button>
-                                <button class="my-btn" v-on:click="" >Reset</button>
+                                <button v-else class="my-btn" v-on:click="update" >Update</button>
+                                <button class="my-btn" v-on:click="reset" >Reset</button>
                             </div>
                         </div>
                     </div>
@@ -153,6 +192,7 @@
 
 <script>
     import Notification from "../notificaiton/Notification";
+    import DateFormatManager from "../../Helper/DateFormatManager";
     export default {
         name: "WorkOrderAssign",
         components: {Notification},
@@ -174,7 +214,9 @@
                     scope : '',
                     remark : '',
                     modifiedBy : '',
-                    woAssignDetailList : []
+                    woAssignDetailBnList : [],
+                    statusName : '',
+                    assignUserName : ''
                 },
                 cbd : {
                     breakDown : '',
@@ -182,6 +224,7 @@
                 },
                 workOrderList : [],
                 departmentBnList : [],
+                woAssignBnList : [],
                 userList : [],
                 deptOid : -1,
                 isCbdModelOpen : false
@@ -206,6 +249,7 @@
 
                         this.departmentBnList = res.data.departmentBnList;
                         this.workOrderList = res.data.workOrderList;
+                        this.woAssignBnList = res.data.woAssignBnList;
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
@@ -289,7 +333,7 @@
 
             },
             addCostBreakDown(){
-                this.woAssign.woAssignDetailList.push(JSON.parse(JSON.stringify(this.cbd)));
+                this.woAssign.woAssignDetailBnList.push(JSON.parse(JSON.stringify(this.cbd)));
                 this.cbd.breakDown = "";
                 this.cbd.cost = "";
                 this.isCbdModelOpen = false;
@@ -301,7 +345,7 @@
                 this.isCbdModelOpen = true;
             },
             removeCostBreakDown(i){
-                this.woAssign.woAssignDetailList.splice(i,1);
+                this.woAssign.woAssignDetailBnList.splice(i,1);
             },
             save(){
 
@@ -353,6 +397,41 @@
                         status : err.response.data.status
                     });
                 });
+
+            },
+            setUpdateData(w){
+
+                this.selectedTab = 0;
+                this.woAssign.id = w.id;
+                this.woAssign.woId = w.woId;
+                this.woAssign.assignTo = w.assignTo;
+                this.woAssign.assignDate = DateFormatManager.formate(w.assignDate);
+                this.woAssign.assignTime = w.assignTime;
+                this.woAssign.scope = w.scope;
+                this.woAssign.remark = w.remark;
+                this.woAssign.modifiedBy = w.modifiedBy;
+                this.woAssign.woAssignDetailBnList = w.woAssignDetailList;
+                this.woAssign.assignUserName = w.assignUserName;
+
+            },
+            reset(){
+
+                this.selectedTab = 0;
+                this.woAssign.id = -1;
+                this.woAssign.woId = "";
+                this.woAssign.assignTo = "";
+                this.woAssign.assignDate = "";
+                this.woAssign.assignTime = "";
+                this.woAssign.scope = "";
+                this.woAssign.remark = "";
+                this.woAssign.modifiedBy = "";
+                this.woAssign.woAssignDetailBnList = [];
+                this.woAssign.assignUserName = "";
+
+            },
+            update(){
+
+
 
             }
         }
