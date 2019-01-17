@@ -24,7 +24,7 @@
                                         <tr>
                                             <td>Department</td>
                                             <td>
-                                                <select v-on:change="departmentChange(deptOid)" v-model="deptOid" >
+                                                <select v-on:change="departmentChange(woAssign.deptOid)" v-model="woAssign.deptOid" >
                                                     <option v-bind:value="-1" >-- select --</option>
                                                     <option v-bind:value="d.oId" v-for="d in departmentBnList" >{{d.name}}</option>
                                                 </select>
@@ -89,6 +89,7 @@
                                         <tr>
                                             <th>Sr</th>
                                             <th>WO</th>
+                                            <th>Dept</th>
                                             <th>Assign to</th>
                                             <th>Date</th>
                                             <th>Time</th>
@@ -104,6 +105,7 @@
                                             <tr v-for="(wab,i) in woAssignBnList" >
                                                 <td>{{i+1}}</td>
                                                 <td>{{wab.workOrderName}}</td>
+                                                <td>{{wab.deptName}}</td>
                                                 <td>{{wab.assignUserName}}</td>
                                                 <td>{{wab.assignDate}}</td>
                                                 <td>{{wab.assignTime}}</td>
@@ -127,7 +129,7 @@
                                                     </table>
                                                 </td>
                                                 <td><i class="fas fa-edit" v-on:click="setUpdateData(wab)" ></i></td>
-                                                <td><i class="fas fa-trash" ></i></td>
+                                                <td><i class="fas fa-trash" v-on:click="deleteWoAssign(wab)" ></i></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -208,6 +210,7 @@
                 woAssign:{
                     id : -1,
                     woId : '',
+                    deptOid : -1,
                     assignTo : '',
                     assignDate : '',
                     assignTime : '',
@@ -216,7 +219,8 @@
                     modifiedBy : '',
                     woAssignDetailBnList : [],
                     statusName : '',
-                    assignUserName : ''
+                    assignUserName : '',
+                    deptName : '',
                 },
                 cbd : {
                     breakDown : '',
@@ -226,7 +230,6 @@
                 departmentBnList : [],
                 woAssignBnList : [],
                 userList : [],
-                deptOid : -1,
                 isCbdModelOpen : false
             }
         },
@@ -366,7 +369,7 @@
                     if (res.data.code===200){
 
                         this.needToCloseNotification = false;
-
+                        this.getInitData();
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -404,12 +407,12 @@
                 this.selectedTab = 0;
                 this.woAssign.id = w.id;
                 this.woAssign.woId = w.woId;
+                this.woAssign.deptOid = w.deptOid;
                 this.woAssign.assignTo = w.assignTo;
                 this.woAssign.assignDate = DateFormatManager.formate(w.assignDate);
                 this.woAssign.assignTime = w.assignTime;
                 this.woAssign.scope = w.scope;
                 this.woAssign.remark = w.remark;
-                this.woAssign.modifiedBy = w.modifiedBy;
                 this.woAssign.woAssignDetailBnList = w.woAssignDetailList;
                 this.woAssign.assignUserName = w.assignUserName;
 
@@ -419,6 +422,7 @@
                 this.selectedTab = 0;
                 this.woAssign.id = -1;
                 this.woAssign.woId = "";
+                this.woAssign.deptOid = "";
                 this.woAssign.assignTo = "";
                 this.woAssign.assignDate = "";
                 this.woAssign.assignTime = "";
@@ -431,7 +435,109 @@
             },
             update(){
 
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
 
+                let url = this.$store.state.baseUrl;
+                this.$http.post(url+"/wo-assign/update",{
+                    woAssignBn : this.woAssign
+                })
+                .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+                        this.getInitData();
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            status : res.data.code
+                        });
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.update,
+                            needTryAgain : true,
+                            status : res.data.code
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.update,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
+
+            },
+            deleteWoAssign(w){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                let url = this.$store.state.baseUrl;
+                this.$http.post(url+"/wo-assign/delete",{
+                    woAssignBn : {
+                        id : w.id,
+                        oId : w.oId
+                    }
+                })
+                .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+                        this.getInitData();
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            status : res.data.code
+                        });
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.deleteWoAssign,
+                            needTryAgain : true,
+                            status : res.data.code
+                        });
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.save,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
 
             }
         }
