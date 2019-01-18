@@ -16,6 +16,7 @@ const Profile = () => import('@/views/user/Profile');
 const ChangePassword = () => import('@/views/user/ChangePassword');
 const Messenger = () => import('@/views/communication/Messenger');
 const TrackByUser = () => import('@/views/location/TrackByUser');
+const TrackByWorkOrder = () => import('@/views/location/TrackByWorkOrder');
 const Task = () => import('@/views/material/Task');
 const Template = () => import('@/views/material/Template');
 const Site = () => import('@/views/material/Site');
@@ -166,6 +167,14 @@ export default new Router({
                     path: '/work-order-assign',
                     name: 'WorkOrderAssign',
                     component: WorkOrderAssign,
+                    meta:{
+                        requiresAuth: true
+                    }
+                },
+                {
+                    path: '/track-by-work-order',
+                    name: 'TrackByWorkOrder',
+                    component: TrackByWorkOrder,
                     meta:{
                         requiresAuth: true
                     }

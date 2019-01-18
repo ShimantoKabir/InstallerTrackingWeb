@@ -65,7 +65,7 @@
                                         <tr>
                                             <td>Department</td>
                                             <td>
-                                                <select v-model="userBeen.deptId" >
+                                                <select v-model="manageUserInfo.deptId" >
                                                     <option v-bind:value="dl.oId" v-for="dl in departmentList" >{{dl.name}}</option>
                                                 </select>
                                             </td>
@@ -110,116 +110,84 @@
                 departmentList : [],
                 isApproved : '',
                 isActive : '',
-                userBeen : {
+                manageUserInfo : {
                     id : '',
                     deptId : '',
                     isUserActive : '',
                     isUserApproved : ''
-                }
+                },
+                needToCloseNotification : true
             }
         },
         mounted(){
-            this.getInitialData();
-            this.getDepartment();
+            this.getInitData();
         },
         methods:{
-            getInitialData(){
+            getInitData(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !',
+                });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/user/get")
-                .then(res=>{
-                    if (res.status===200){
-                        if (res.data.code===200){
-                            this.users = res.data.list;
-                            console.log(JSON.stringify(this.users));
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Initial data processing error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : 'Can not get user list !',
-                                callBackMethod : this.getInitialData,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
-                    }else {
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Initial data processing error',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Server error !',
-                            callBackMethod : this.getInitialData,
-                            needTryAgain : true,
-                            status : 400
-                        });
-                    }
-
+                this.$http.post(url+"/user/manage-init",{
+                    userBn : this.$store.state.userInfo
                 })
-                .catch(err=>{
-                    console.log(err);
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'Initial data processing error',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Can not get user list !',
-                        width : '30%',
-                        callBackMethod : this.getInitialData,
-                        needTryAgain : true,
-                        status : 400
-                    });
-                })
-
-            },
-            getDepartment(){
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/department/get-by-user",this.$store.state.userInfo)
                 .then(res=>{
+
+                    console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
-                        this.departmentList = res.data.list;
-                        console.log(JSON.stringify(this.departmentList));
+
+                        this.users = res.data.userList;
+                        this.departmentList = res.data.departmentBnList;
+
+                        if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Initial data processing error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Can not get department list !',
-                            width : '30%',
-                            callBackMethod : this.getInitialData,
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            status : 400
+                            status : res.data.code
                         });
                     }
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Initial data processing error',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Can not get department list !',
-                        width : '60%',
-                        callBackMethod : this.getInitialData,
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.manageUserAttempt,
                         needTryAgain : true,
-                        status : 400
+                        status : err.response.data.status
                     });
                 })
+
             },
             manageUser(u){
-                this.userBeen.deptId = u.deptId;
+                this.manageUserInfo.deptId = u.deptId;
                 if (u.isUserActive===1){
                     this.isActive = true;
-                    this.userBeen.isUserActive=1;
+                    this.manageUserInfo.isUserActive=1;
                 }else {
                     this.isActive = false;
-                    this.userBeen.isUserActive=0;
+                    this.manageUserInfo.isUserActive=0;
                 }
                 if (u.isUserApproved===1){
                     this.isApproved = true;
-                    this.userBeen.isUserApproved=1;
+                    this.manageUserInfo.isUserApproved=1;
                 }else {
                     this.isApproved = false;
-                    this.userBeen.isUserApproved=0;
+                    this.manageUserInfo.isUserApproved=0;
                 }
                 this.isManageUserModelOpen = true;
-                this.userBeen.id = u.id;
+                this.manageUserInfo.id = u.id;
             },
             closeManageUserModel(){
                 this.isManageUserModelOpen = false;
@@ -233,61 +201,57 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/manage",this.userBeen)
+                this.$http.post(url+"/user/manage",{
+                    userBn : this.$store.state.userInfo,
+                    manageUserBn : this.manageUserInfo
+                })
                 .then(res=>{
-                    if (res.status===200){
-                        if (res.data.code===200){
-                            this.getInitialData();
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : 'User manage successful !',
-                            });
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : 'User manage unsuccessful !',
-                                callBackMethod : this.manageUserAttempt,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
+                    console.log(JSON.stringify(res.data));
+                    if (res.data.code===200){
+                        this.getInitData();
+                        this.needToCloseNotification = false;
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            status : res.data.code,
+                            needOk : true
+                        });
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'User manage unsuccessful !',
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.manageUserAttempt,
                             needTryAgain : true,
-                            status : 400
+                            status : res.data.code
                         });
                     }
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'User manage unsuccessful !',
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.manageUserAttempt,
                         needTryAgain : true,
-                        status : 400
+                        status : err.response.data.status
                     });
                 })
             },
             approveChange(){
                 if (this.isApproved){
-                    this.userBeen.isUserApproved=1;
+                    this.manageUserInfo.isUserApproved=1;
                 } else {
-                    this.userBeen.isUserApproved=0;
+                    this.manageUserInfo.isUserApproved=0;
                 }
             },
             activeChange(){
                 if (this.isActive){
-                    this.userBeen.isUserActive=1;
+                    this.manageUserInfo.isUserActive=1;
                 } else {
-                    this.userBeen.isUserActive=0;
+                    this.manageUserInfo.isUserActive=0;
                 }
             }
         }

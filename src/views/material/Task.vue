@@ -134,7 +134,7 @@
         name: "Task",
         components: {Notification},
         mounted(){
-            this.getUserList();
+            this.getInitData();
             console.log(JSON.stringify(this.$store.state.userInfo));
             this.task.modifiedBy = this.$store.state.userInfo.id;
             console.log(JSON.stringify(this.task));
@@ -153,11 +153,12 @@
                 },
                 taskList : [],
                 userList : [],
-                isUpdateTaskModelOpen : false
+                isUpdateTaskModelOpen : false,
+                needToCloseNotification : true
             }
         },
         methods:{
-            getUserList(){
+            getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -166,7 +167,9 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/user/get")
+                this.$http.post(url+"/task/init-data",{
+                    userBn : this.$store.state.userInfo
+                })
                 .then(res=>{
 
                     console.log(JSON.stringify(res.data));
@@ -174,7 +177,16 @@
                     if (res.data.code===200){
 
                         this.userList = res.data.list;
-                        this.$refs.noti.closeNotification();
+
+                        if (res.data.taskResponse.code===200){
+                            this.taskList = res.data.taskResponse.list;
+                        } 
+                        
+                        if (res.data.userResponse.code===200){
+                            this.userList = res.data.userResponse.list;
+                        }
+                        
+                        if (this.needToCloseNotification) {this.$refs.noti.closeNotification();}
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -189,7 +201,7 @@
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err));
                     this.$refs.noti.setNotificationProperty({
                         title : 'ERROR',
                         bodyIcon : 'fas fa-exclamation-circle',
@@ -198,10 +210,7 @@
                         needTryAgain : true,
                         status : err.response.data.status
                     });
-                })
-                .finally(res=>{
-                    this.getTaskList();
-                })
+                });
 
             },
             saveTask(){
@@ -213,86 +222,49 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/task/save",this.task)
-                    .then(res=>{
-
-                        console.log(JSON.stringify(res.data));
-
-                        if (res.data.code===200){
-
-                            this.getTaskList();
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code
-                            });
-
-                        } else {
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.saveTask,
-                                needTryAgain : true,
-                                status : 400
-                            });
-
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.getInitialData,
-                            needTryAgain : true,
-                            status : err.response.data.status
-                        });
-                    })
-
-            },
-            getTaskList(){
-
-                this.$refs.noti.setNotificationProperty({
-                    title : 'Loading',
-                    bodyIcon : 'fas fa-sync fa-spin',
-                    bodyMsg : 'Please wait ... !'
-                });
-
-                let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/task/get")
+                this.$http.post(url+"/task/save",{
+                    userBn : this.$store.state.userInfo,
+                    taskBn : this.task
+                })
                 .then(res=>{
 
                     console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
-                        this.taskList = res.data.list;
-                        this.$refs.noti.closeNotification();
+                        this.needToCloseNotification = false;
+                        this.getInitData();
+                        this.reset();
+
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            status : res.data.code,
+                            needOk :true
+                        });
 
                     } else {
+
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
-                            callBackMethod : this.getTaskList,
+                            callBackMethod : this.saveTask,
                             needTryAgain : true,
-                            status : 400
+                            status : res.data.code
                         });
+
                     }
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(res.data.msg));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'ERROR',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
-                        callBackMethod : this.getTaskList,
+                        callBackMethod : this.getInitialData,
                         needTryAgain : true,
                         status : err.response.data.status
                     });
@@ -319,46 +291,54 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/task/update",this.task)
-                    .then(res=>{
+                this.$http.post(url+"/task/update",{
+                    userBn : this.$store.state.userInfo,
+                    taskBn : this.task
+                })
+                .then(res=>{
 
-                        console.log(JSON.stringify(res.data));
+                    console.log(JSON.stringify(res.data));
 
-                        if (res.data.code===200){
+                    if (res.data.code===200){
 
-                            this.getTaskList();
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code
-                            });
+                        this.getInitData();
+                        this.isUpdateTaskModelOpen = false;
+                        this.needToCloseNotification = false;
+                        this.reset();
 
-                        } else {
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.saveTask,
-                                needTryAgain : true,
-                                status : 400
-                            });
-
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
                         this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.getInitialData,
-                            needTryAgain : true,
-                            status : err.response.data.status
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            status : res.data.code,
+                            needOk: true
                         });
-                    })
+
+                    } else {
+
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.saveTask,
+                            needTryAgain : true,
+                            status : 400
+                        });
+
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                })
 
             },
             openUpdateTaskModel(task){
@@ -368,6 +348,14 @@
                 this.task.duration = task.duration;
                 this.task.cost = task.cost;
                 this.task.taskSpecialist = task.taskSpecialist;
+            },
+            reset(){
+                this.isUpdateTaskModelOpen = false;
+                this.task.id = -1;
+                this.task.name = "";
+                this.task.duration = "";
+                this.task.cost = "";
+                this.task.taskSpecialist = [];
             }
         }
     }

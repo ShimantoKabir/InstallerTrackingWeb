@@ -269,7 +269,7 @@
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : "Would you like to save?",
                             callBackMethod : this.saveWorkOrderDetail,
-                            needTryAgain : true
+                            needConfirmation : true
                         });
                     }
                 }
@@ -346,7 +346,8 @@
                         templateOid : this.workOrderDetail.templateOid,
                         modifiedBy : this.workOrderDetail.modifiedBy
                     },
-                    taskBnList : this.taskList
+                    taskBnList : this.taskList,
+                    userBn : this.$store.state.userInfo
                 })
                 .then(res=>{
 
@@ -404,7 +405,8 @@
                     workOrderDetailBn : {
                         modifiedBy : this.workOrderDetail.modifiedBy
                     },
-                    taskBnList : this.updateTaskList
+                    taskBnList : this.updateTaskList,
+                    userBn : this.$store.state.userInfo
                 })
                     .then(res=>{
 
@@ -420,7 +422,8 @@
                                 title : 'Success',
                                 bodyIcon : 'fas fa-check-circle',
                                 bodyMsg : res.data.msg,
-                                status : res.data.code
+                                status : res.data.code,
+                                needOk : true
                             });
 
                         } else {
@@ -518,7 +521,8 @@
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code
+                            status : res.data.code,
+                            needOk: true
                         });
 
                     } else {

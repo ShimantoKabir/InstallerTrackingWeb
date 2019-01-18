@@ -19,11 +19,11 @@
                                 <tbody>
                                     <tr>
                                         <td>Email</td>
-                                        <td><input required type="email" v-model="user.userEmail" /></td>
+                                        <td><input required type="email" v-model="loginUserDate.userEmail" /></td>
                                     </tr>
                                     <tr>
                                         <td>Password</td>
-                                        <td><input required type="password" v-model="user.password" /></td>
+                                        <td><input required type="password" v-model="loginUserDate.password" /></td>
                                     </tr>
                                     <tr>
                                         <td colspan="2" ><p v-on:click="registration" style="color: green;font-size: 12px;margin-top: 15px;cursor: pointer">Don't have account click hare !</p></td>
@@ -34,19 +34,19 @@
                                 <tbody>
                                     <tr>
                                         <td>Email</td>
-                                        <td><input required type="email" v-model="user.userEmail" /></td>
+                                        <td><input required type="email" v-model="regUserDate.userEmail" /></td>
                                     </tr>
                                     <tr>
                                         <td>Password</td>
-                                        <td><input required type="password" v-model="user.password"  /></td>
+                                        <td><input required type="password" v-model="regUserDate.password"  /></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                         <div class="my-div-foot" >
                             <div class="my-div-foot-left" >
-                                <button v-if="userAttempt===0" v-on:click="loginAttempt" class="my-btn" >Login</button>
-                                <button v-else class="my-btn" v-on:click="registrationAttempt" >Registration</button>
+                                <button v-if="userAttempt===0" v-on:click="verifyInput('login')" class="my-btn" >Login</button>
+                                <button v-else v-on:click="verifyInput('reg')" class="my-btn" >Registration</button>
                             </div>
                             <div>
                                 <p v-if="userAttempt===0" v-on:click="goForgotPasswordLayout" style="color: red;cursor: pointer;font-size: 12px;font-style: italic" >Forgot password ?</p>
@@ -64,6 +64,7 @@
 
     import Dashboard from "./Dashboard";
     import Notification from "../views/notificaiton/Notification";
+    import MyCookie from "../Helper/MyCookie";
 
     export default {
         name: "LoginReg",
@@ -83,13 +84,68 @@
                 styleObject: {
                     marginTop : ''
                 },
-                user : {
+                loginUserDate : {
+                    userEmail : '',
+                    password : ''
+                },
+                regUserDate : {
                     userEmail : '',
                     password : ''
                 }
             }
         },
         methods:{
+            verifyInput(which){
+                if (which==="login"){
+                    if (this.loginUserDate.userEmail===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Email required !',
+                            needOk: true
+                        });
+                    } else if (this.loginUserDate.password===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Password required !',
+                            needOk: true
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.loginAttempt,
+                            needConfirmation : true
+                        });
+                    }
+                }else if (which==="reg"){
+                    if (this.regUserDate.userEmail===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Email required !',
+                            needOk: true
+                        });
+                    } else if (this.regUserDate.password===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Password required !',
+                            needOk: true
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.registrationAttempt,
+                            needConfirmation : true
+                        });
+                    }
+                }
+            },
             registration(){
                 this.userAttempt = 1;
             },
@@ -106,17 +162,18 @@
 
                 let url = this.$store.state.baseUrl;
 
-                this.$http.post(url+"/user/login",this.user)
+                this.$http.post(url+"/user/login",{
+                    userBn : this.loginUserDate
+                })
                 .then(response=>{
 
-                    console.log(response.data);
+                    console.log(JSON.stringify(response.data));
 
                     if (response.data.code===200){
 
                         this.$store.state.userInfo = response.data.object;
-
-                        this.getInitialData(response.data.object)
-
+                        MyCookie.setCookie("userInfo",JSON.stringify(response.data.object),0);
+                        this.getInitialData()
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -146,14 +203,16 @@
             registrationAttempt(){
 
                 this.$refs.noti.setNotificationProperty({
-                    title : 'Registration processing',
+                    title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',
                     bodyMsg : 'Please wait ...',
                     width : '30%',
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/registration",this.user)
+                this.$http.post(url+"/user/registration",{
+                    userBn : this.regUserDate
+                })
                 .then(response=>{
 
                     if (response.status===200){
@@ -214,7 +273,9 @@
             getInitialData(){
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/initial-data",this.$store.state.userInfo)
+                this.$http.post(url+"/user/initial-data",{
+                    userBn : this.$store.state.userInfo
+                })
                 .then(response=>{
                     if (response.data.code===200){
 

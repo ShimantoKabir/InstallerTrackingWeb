@@ -32,11 +32,11 @@
                                         </tr>
                                         <tr>
                                             <td>Latitude</td>
-                                            <td><input type="text" v-model="site.lat" /></td>
+                                            <td><input type="number" v-model="site.lat" /></td>
                                         </tr>
                                         <tr>
                                             <td>Longitude</td>
-                                            <td><input type="text" v-model="site.lon" /></td>
+                                            <td><input type="number" v-model="site.lon" /></td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -154,7 +154,8 @@
                     modifiedBy : ''
                 },
                 currentPlace: null,
-                siteList : []
+                siteList : [],
+                needToCloseNotification : true
             }
         },
         methods:{
@@ -175,7 +176,7 @@
 
                         if (res.data.code===200){
                             this.siteList = res.data.list;
-                            this.$refs.noti.closeNotification();
+                            if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
                         } else {
                             this.$refs.noti.setNotificationProperty({
                                 title : 'Error',
@@ -217,8 +218,11 @@
                 this.$http.post(url+"/site/save",this.site)
                 .then(res=>{
 
-                    // console.log(JSON.stringify(res.data));
+                    console.log(JSON.stringify(res.data));
+
                     if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
 
                         this.site.address = '';
                         this.site.lat = '';
@@ -228,14 +232,16 @@
                         this.getSiteList();
 
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Loading',
+                            title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code
+                            status : res.data.code,
+                            needOk : true
                         });
+
                     } else {
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Loading',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
                             callBackMethod : this.saveSite,
@@ -353,12 +359,13 @@
                                 title : 'Success',
                                 bodyIcon : 'fas fa-check-circle',
                                 bodyMsg : res.data.msg,
-                                status : res.data.code
+                                status : res.data.code,
+                                needOk : true
                             });
 
                         } else {
                             this.$refs.noti.setNotificationProperty({
-                                title : 'Loading',
+                                title : 'Error',
                                 bodyIcon : 'fas fa-exclamation-circle',
                                 bodyMsg : res.data.msg,
                                 callBackMethod : this.updateSite,

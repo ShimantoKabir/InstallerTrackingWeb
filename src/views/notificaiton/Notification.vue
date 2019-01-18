@@ -24,9 +24,12 @@
                         <div class="notification-foot" >
                             <div class="notification-foot-left" >
                                 <button v-show="notificationProperty.needTryAgain" class="btn-try-again" v-on:click="tryAgain" >Try again</button>
+                                <button v-show="notificationProperty.needConfirmation" class="btn-try-again" v-on:click="confirm" >Yes</button>
                             </div>
                             <div class="notification-foot-right" >
-                                <button style="margin-left: 3px" class="my-btn" v-on:click="closeNotification" >Ok</button>
+                                <button v-show="notificationProperty.needOk" style="margin-left: 3px" class="my-btn" v-on:click="closeNotification" >Ok</button>
+                                <button v-show="notificationProperty.needTryAgain" style="margin-left: 3px" class="my-btn" v-on:click="closeNotification" >No</button>
+                                <button v-show="notificationProperty.needConfirmation" style="margin-left: 3px" class="my-btn" v-on:click="closeNotification" >No</button>
                             </div>
                         </div>
                     </div>
@@ -53,6 +56,8 @@
                     width : '',
                     callBackMethod:{},
                     needTryAgain : false,
+                    needConfirmation : false,
+                    needOk : false,
                     status : 200
                 },
                 bodyIconColor:{
@@ -67,11 +72,15 @@
             tryAgain(){
                 this.notificationProperty.callBackMethod();
             },
+            confirm(){
+                this.notificationProperty.callBackMethod();
+            },
             showNotification(){
                 this.isNotificationOpen = true;
             },
             setNotificationProperty(notificationProperty){
                 this.showNotification();
+
                 this.notificationProperty.title = notificationProperty.title;
                 this.notificationProperty.titleIcon = notificationProperty.titleIcon;
                 this.notificationProperty.bodyIcon = notificationProperty.bodyIcon;
@@ -79,7 +88,10 @@
                 this.notificationProperty.width = notificationProperty.width;
                 this.notificationProperty.callBackMethod = notificationProperty.callBackMethod;
                 this.notificationProperty.needTryAgain = notificationProperty.needTryAgain;
+                this.notificationProperty.needConfirmation = notificationProperty.needConfirmation;
+                this.notificationProperty.needOk = notificationProperty.needOk;
                 this.notificationProperty.status = notificationProperty.status;
+
                 if (this.notificationProperty.status===400){
                     this.bodyIconColor.color = "red";
                 }else if (this.notificationProperty.status===200){

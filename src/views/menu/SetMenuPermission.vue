@@ -115,7 +115,9 @@
 
                 let url = this.$store.state.baseUrl;
 
-                this.$http.post(url+"/department/get-by-user",this.$store.state.userInfo)
+                this.$http.post(url+"/department/get-by-user",{
+                    userBn : this.$store.state.userInfo
+                })
                 .then(res=>{
 
                     if (res.data.code===200){

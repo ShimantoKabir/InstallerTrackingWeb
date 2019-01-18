@@ -11,6 +11,7 @@ import '@/assets/css/fontawesome.min.css'
 
 Vue.config.productionTip = false;
 Vue.prototype.$http = axios;
+
 Vue.use(VueGoogleMaps, {
     load: {
         key: "AIzaSyAOHSMMhB3tSoIZuf8eRqQBeJbSl0CrfUw",

@@ -48,7 +48,7 @@
                             </div>
                         </div>
                         <div v-show="selectedTab===0" class="my-tab-foot" >
-                            <button class="my-btn" v-on:click="saveDepartment" >Save</button>
+                            <button class="my-btn" v-on:click="verifyInput('saveDepartment')" >Save</button>
                         </div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
         name: "CreateDepartment",
         components: {Notification},
         mounted(){
-            this.getInitialData();
+            this.getInitData();
         },
         data(){
             return{
@@ -73,33 +73,56 @@
                 department : {
                     name : '',
                     rank : '',
-                    userBeen : {}
                 },
-                departmentList : []
+                departmentList : [],
+                needToCloseNotification : true,
             }
         },
         methods:{
-            getInitialData(){
+            verifyInput(which){
+                if (which==="saveDepartment") {
+                    if (this.department.name===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Department name required !',
+                            needOk : true
+                        });
+                    } else if (this.department.rank==="") {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Department rank required !',
+                            needOk : true
+                        });                        
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ? ',
+                            callBackMethod : this.saveDepartment,
+                            needConfirmation : true
+                        });
+                    }
+                }
+            },
+            getInitData(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !',
+                });
+
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/department/get-by-user",this.$store.state.userInfo)
-                    .then(res=>{
-
-                        if (res.data.code===200){
-                            this.departmentList = res.data.list
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Initial data processing error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : 'Can not get department list !',
-                                callBackMethod : this.getInitialData,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
+                this.$http.post(url+"/department/get-by-user",{
+                    userBn : this.$store.state.userInfo
+                })
+                .then(res=>{
+                    if (res.data.code===200){
+                        this.departmentList = res.data.list;
+                        if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
+                    } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Initial data processing error',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -108,7 +131,19 @@
                             needTryAgain : true,
                             status : 400
                         });
-                    })
+                    }
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Initial data processing error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : 'Can not get department list !',
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        status : 400
+                    });
+                })
             },
             tabBtnClickListener(i){
                 this.selectedTab = i;
@@ -123,19 +158,23 @@
 
                 let url = this.$store.state.baseUrl;
 
-                this.department.userBeen = this.$store.state.userInfo;
-
-                this.$http.post(url+"/department/save",this.department)
+                this.$http.post(url+"/department/save",{
+                    departmentBn : this.department,
+                    userBn : this.$store.state.userInfo
+                })
                 .then(response=>{
 
                     console.log(response.data);
 
                     if (response.data.code===200){
-                        this.departmentList = response.data.list;
+
+                        this.getInitData();
+                        this.needToCloseNotification = false;
                         this.$refs.noti.setNotificationProperty({
                             title : 'Processing result',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : response.data.msg,
+                            needOk : true
                         });
                     }else {
                         this.$refs.noti.setNotificationProperty({

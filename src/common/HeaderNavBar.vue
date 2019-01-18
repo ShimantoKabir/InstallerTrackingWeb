@@ -78,6 +78,8 @@
             },
             logout(){
                 this.$store.state.isLogIn = false;
+                this.$store.state.menu = "";
+                this.$store.state.route = "";
                 this.$store.state.userInfo = '';
                 this.$router.push({
                     path: '/',
