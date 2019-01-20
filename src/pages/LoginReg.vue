@@ -112,13 +112,7 @@
                             needOk: true
                         });
                     } else {
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Alert',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Would you like to submit ?',
-                            callBackMethod : this.loginAttempt,
-                            needConfirmation : true
-                        });
+                        this.loginAttempt();
                     }
                 }else if (which==="reg"){
                     if (this.regUserDate.userEmail===""){

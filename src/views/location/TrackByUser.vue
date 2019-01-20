@@ -86,7 +86,7 @@
                                                  :position="m.position"
                                                  :clickable="true"
                                                  :draggable="true"
-                                                 v-on:click="getPosition(m.position)" ></gmap-marker>
+                                                 v-on:click="getPosition(m.position)"></gmap-marker>
                                     <gmap-polyline v-bind:path.sync="path" v-bind:options="{ strokeColor:'#7f8000'}"> </gmap-polyline>
                                     <gmap-info-window @closeclick="isPosAddressInfoOpen=false"
                                             :opened="isPosAddressInfoOpen"
@@ -124,6 +124,7 @@
 
 <script>
     import Notification from "../notificaiton/Notification";
+
     export default {
         name: "TrackByUser",
         components: {Notification},
@@ -283,18 +284,21 @@
                     this.markers = [];
                     // console.log(JSON.stringify(this .locations));
                     for (let i = 0; i < this.locations.length; i++) {
+
                         let marker = {
                             lat: this.locations[i].lat,
                             lng: this.locations[i].lon
                         };
-                        this.markers.push({ position: marker });
+                        this.markers.push({
+                            position: marker
+                        });
                         this.path.push({
                             lat: this.locations[i].lat,
                             lng: this.locations[i].lon
                         })
                     }
 
-                    console.log(JSON.stringify(this.markers));
+                    console.log(JSON.stringify(this.path));
                     this.countLocation();
 
                 })
