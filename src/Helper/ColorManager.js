@@ -1,6 +1,6 @@
-export default class RandomColorGenerator {
+export default class ColorManager {
 
-    static generate() {
+    static generateRandomColor() {
         let letters = '0123456789ABCDEF';
         let color = '#';
         for (let i = 0; i < 6; i++) {

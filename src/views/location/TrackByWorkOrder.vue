@@ -63,13 +63,39 @@
                         <div class="my-div-body" >
                             <div class="my-div-body-100" >
                                 <gmap-map :center="center" :zoom="10" style="width:100%;  height: 500px;" >
-                                    <span v-for="ul in userLocationList" >
+                                    <span v-for="(ul,i) in userLocationList" >
+                                        
                                         <gmap-marker
-                                                :key="index"
-                                                v-for="(m, index) in ul.locationList"
-                                                :position="m.position" >
+                                            :key="index"
+                                            v-for="(m, index) in ul.locationList"
+                                            :label="getLevel(index+1,ul.locationList.length)"
+                                            :draggable="true"
+                                            :position="m.position">
+
+                                            <gmap-circle v-if="index===0"
+                                                :center="m.position"
+                                                :radius="1000"
+                                                :options="{fillColor:'green',fillOpacity:1.0}"
+                                                :visible="true">
+                                            </gmap-circle>
+
+                                            <gmap-circle v-else-if="index+1===ul.locationList.length"
+                                                 :center="m.position"
+                                                 :radius="1000"
+                                                 :options="{fillColor:'red',fillOpacity:1.0}"
+                                                 :visible="true">
+                                            </gmap-circle>
+
+                                            <gmap-circle v-else
+                                                 :center="m.position"
+                                                 :radius="1000"
+                                                 :options="{fillColor:'blue',fillOpacity:1.0}"
+                                                 :visible="true">
+                                            </gmap-circle>
+
                                         </gmap-marker>
-                                        <gmap-polyline v-bind:path.sync="ul.locationList" v-bind:options="{ strokeColor:randomColorGenerator.generate()}"> </gmap-polyline>
+
+                                        <gmap-polyline v-bind:path.sync="ul.locationList" v-bind:options="{ strokeColor:colorManager.generateRandomColor()}"> </gmap-polyline>
                                     </span>
                                 </gmap-map>
                             </div>
@@ -87,7 +113,7 @@
     import Notification from "../notificaiton/Notification";
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";
-    import RandomColorGenerator from "../../Helper/RandomColorGenerator";
+    import ColorManager from "../../Helper/ColorManager";
 
     export default {
         name: "TrackByWorkOrder",
@@ -100,7 +126,7 @@
         },
         data(){
             return{
-                randomColorGenerator : RandomColorGenerator,
+                colorManager : ColorManager,
                 url : this.$store.state.baseUrl,
                 workOrderList : [],
                 needToCloseNotification : true,
@@ -116,6 +142,24 @@
             }
         },
         methods:{
+            getLevel(i,ln){
+
+                let textColor = '';
+
+                if (i===1){
+                    textColor = "blue"
+                } else if (i===ln){
+                    textColor = "black"
+                } else {
+                    textColor = "white"
+                }
+
+                return {
+                    text: i.toString(),
+                    color : textColor
+                };
+
+            },
             checkWebSocketConnection(){
                 let lThis = this;
                 setInterval(function(){
