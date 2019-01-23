@@ -58,7 +58,7 @@
                     needTryAgain : false,
                     needConfirmation : false,
                     needOk : false,
-                    status : 200
+                    code : 200
                 },
                 bodyIconColor:{
                     color: ""
@@ -90,11 +90,11 @@
                 this.notificationProperty.needTryAgain = notificationProperty.needTryAgain;
                 this.notificationProperty.needConfirmation = notificationProperty.needConfirmation;
                 this.notificationProperty.needOk = notificationProperty.needOk;
-                this.notificationProperty.status = notificationProperty.status;
+                this.notificationProperty.code = notificationProperty.code;
 
-                if (this.notificationProperty.status===400){
+                if (this.notificationProperty.code===400){
                     this.bodyIconColor.color = "red";
-                }else if (this.notificationProperty.status===200){
+                }else if (this.notificationProperty.code===200){
                     this.bodyIconColor.color = "green";
                 }else {
                     this.bodyIconColor.color = "gray";

@@ -59,7 +59,7 @@
                         </div>
                         <div class="my-div-foot" >
                             <div class="my-div-foot-left" >
-                                <button class="my-btn" v-on:click="showLocation" >Show location</button>
+                                <button class="my-btn" v-on:click="verifyInput('showLocation')" >Show location</button>
                             </div>
                         </div>
                     </div>
@@ -81,35 +81,66 @@
                         <div class="my-div-body" >
                             <div class="my-div-body-100" >
                                 <gmap-map :center="center" :zoom="10" style="width:100%;  height: 500px;" >
-                                    <gmap-marker :key="index"
-                                                 v-for="(m, index) in markers"
-                                                 :position="m.position"
-                                                 :clickable="true"
+
+                                    <gmap-marker v-on:click="getPosition(u,index)"
+                                                 :key="index"
+                                                 v-for="(u,index) in userLocationList"
+                                                 :label="{ text: index.toString(),color : 'white'}"
                                                  :draggable="true"
-                                                 v-on:click="getPosition(m.position)"></gmap-marker>
-                                    <gmap-polyline v-bind:path.sync="path" v-bind:options="{ strokeColor:'#7f8000'}"> </gmap-polyline>
+                                                 :position="u.position">
+
+                                        <gmap-circle
+                                                :center="u.position"
+                                                :radius="3000"
+                                                :options="{fillColor:'green',fillOpacity:1.0}"
+                                                :visible="true">
+                                        </gmap-circle>
+
+                                    </gmap-marker>
+
+                                    <gmap-polyline v-bind:path.sync="userLocationList" v-bind:options="{ strokeColor:'green'}"> </gmap-polyline>
+
                                     <gmap-info-window @closeclick="isPosAddressInfoOpen=false"
-                                            :opened="isPosAddressInfoOpen"
-                                            :position="selectedMarkerPosition" >
-                                            <div v-if="addressInfo" >
-                                                <table>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>Compound code</td>
-                                                            <td>{{addressInfo.compoundCode}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Global code</td>
-                                                            <td>{{addressInfo.globalCode}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Formatted address</td>
-                                                            <td>{{addressInfo.formattedAddress}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <i v-else class="fas fa-sync fa-spin" ></i>
+                                                      :opened="isPosAddressInfoOpen"
+                                                      :position="selectedMarkerPosition" >
+
+                                        <div v-if="markerInfo" >
+                                            <table class="my-tbl" >
+                                                <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td>Index</td>
+                                                    <td>{{markerInfo.index}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Date</td>
+                                                    <td>{{markerInfo.date}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>User name</td>
+                                                    <td>{{markerInfo.userName}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Work order</td>
+                                                    <td>{{markerInfo.workOrderName}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Address</td>
+                                                    <td>{{markerInfo.formattedAddress}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Position</td>
+                                                    <td>latitude : {{markerInfo.latitude}} , Longitude : {{markerInfo.longitude}}</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <i v-else class="fas fa-sync fa-spin" ></i>
                                     </gmap-info-window>
                                 </gmap-map>
                             </div>
@@ -124,16 +155,20 @@
 
 <script>
     import Notification from "../notificaiton/Notification";
+    import SockJS from "sockjs-client";
+    import Stomp from "webstomp-client";
 
     export default {
         name: "TrackByUser",
         components: {Notification},
         mounted(){
+            this.checkWebSocketConnection();
             this.getInitData();
-            this.geoLocate();
+            this.connect();
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 departments : [],
                 users : [],
                 locations : [],
@@ -143,21 +178,64 @@
                 date : '',
                 locationInterval : '',
                 isMapOpen : false,
+                connected : false,
                 center: {
-                    lat: '',
-                    lng: ''
+                    lat: 25.699035,
+                    lng: 88.703594
                 },
                 markers: [],
                 path: [],
                 isPosAddressInfoOpen : false,
-                addressInfo : {
-                    compoundCode : '',
-                    globalCode : '',
-                    formattedAddress : ''
-                }
+                markerInfo : {
+                    index : '',
+                    date : '',
+                    userName : '',
+                    workOrderName : '',
+                    formattedAddress : '',
+                    latitude : '',
+                    longitude : ''
+                },
+                needToCloseNotification : true,
+                userLocationList : '',
             }
         },
         methods:{
+            checkWebSocketConnection(){
+                let lThis = this;
+                setInterval(function(){
+                    if (!lThis.connected){
+                        lThis.connect();
+                    }
+                },5000);
+            },
+            verifyInput(which){
+                if (which==="showLocation"){
+                    if (this.selectedDepartmentId===-1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : "You need to select a work order !",
+                            needOk : true
+                        });
+                    } else if (this.selectedUserId===-1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : "You need to choose a user !",
+                            needOk : true
+                        });
+                    }else if (this.date===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : "You need to choose a date !",
+                            needOk : true
+                        });
+                    } else {
+                        this.showLocation();
+                    }
+                }
+            },
             getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -171,20 +249,21 @@
                 this.$http.get(url+"/department/get")
                     .then(res=>{
 
-                        console.log(JSON.stringify(res.data));
+                        // console.log(JSON.stringify(res.data));
 
                         if (res.data.code===200){
                             this.departments = res.data.list;
-                            this.$refs.noti.closeNotification();
+                            if (this.needToCloseNotification){
+                                this.$refs.noti.closeNotification();
+                            }
                         } else {
                             this.$refs.noti.setNotificationProperty({
                                 title : 'Initial data processing error',
                                 bodyIcon : 'fas fa-exclamation-circle',
                                 bodyMsg : 'Can not get department list !',
-                                width : '30%',
                                 callBackMethod : this.getInitialData,
                                 needTryAgain : true,
-                                status : 400
+                                code : 400
                             });
                         }
 
@@ -195,10 +274,9 @@
                             title : 'Initial data processing error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : 'Can not get department list !',
-                            width : '60%',
                             callBackMethod : this.getInitialData,
                             needTryAgain : true,
-                            status : 400
+                            code : 400
                         });
                     })
 
@@ -211,18 +289,20 @@
                     bodyMsg : 'Please wait .... !',
                 });
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/user/get-by-department",{
-                    oId : this.selectedDepartmentId
+                this.$http.post(this.url+"/user/get-by-department",{
+                    departmentBn : {
+                        oId : this.selectedDepartmentId
+                    }
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
                         this.users = res.data.list;
-                        this.$refs.noti.closeNotification();
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
+                        }
                     } else {
                         this.users = [];
                         this.$refs.noti.setNotificationProperty({
@@ -231,7 +311,7 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.departmentChange,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     }
 
@@ -245,7 +325,7 @@
                         width : '60%',
                         callBackMethod : this.departmentChange,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 
@@ -253,156 +333,85 @@
             showLocation(){
 
                 this.isMapOpen = true;
-                let url = this.$store.state.baseUrl;
 
-                this.$http.post(url+"/location/track-by-user",{
-                    id : this.selectedUserId,
-                    createdDate : this.date
-                })
-                .then(res=>{
-
-                    if (res.data.code===200){
-                        this.locations = res.data.list;
-                        this.center.lat = res.data.list[0].lat;
-                        this.center.lng = res.data.list[0].lon;
-                        console.log(JSON.stringify(this.locations));
+                let req = {
+                    locationBn : {
+                        userId : this.selectedUserId,
+                        createdDate : this.date
                     }
+                };
 
-                })
-                .catch(err=>{
-                    // console.log(err);
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'Error',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : err.response.data.message,
-                        callBackMethod : this.showLocation,
-                        needTryAgain : true,
-                        status : err.response.data.status
-                    });
-                })
-                .finally(res=>{
-                    this.markers = [];
-                    // console.log(JSON.stringify(this .locations));
-                    for (let i = 0; i < this.locations.length; i++) {
+                this.stompClient.send("/ws-request/get-location-by-user",JSON.stringify(req),{});
 
-                        let marker = {
-                            lat: this.locations[i].lat,
-                            lng: this.locations[i].lon
-                        };
-                        this.markers.push({
-                            position: marker
-                        });
-                        this.path.push({
-                            lat: this.locations[i].lat,
-                            lng: this.locations[i].lon
-                        })
-                    }
-
-                    console.log(JSON.stringify(this.path));
-                    this.countLocation();
-
-                })
 
             },
             closeMap(){
                 this.isMapOpen = false;
-                clearInterval(this.locationInterval);
             },
-            geoLocate() {
-                navigator.geolocation.getCurrentPosition(position => {
-                    this.center = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                });
-            },
-            getPosition(pos){
+            getPosition(u,index){
 
-                this.selectedMarkerPosition = pos;
+                this.selectedMarkerPosition = u.position;
                 this.isPosAddressInfoOpen = true;
 
-                this.$http.get("https://maps.googleapis.com/maps/api/geocode/json?latlng="+pos.lat+","+pos.lng+"&key=AIzaSyAOHSMMhB3tSoIZuf8eRqQBeJbSl0CrfUw")
-                .then(res=>{
-                    console.log(JSON.stringify(res));
-                    if (res.data.status==="OK"){
-                        this.addressInfo.compoundCode = res.data.plus_code.compound_code;
-                        this.addressInfo.globalCode = res.data.plus_code.global_code;
-                        this.addressInfo.formattedAddress = res.data.results[0].formatted_address;
-                    }
-                })
-                .catch(err=>{
-                    // console.log(err);
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'Error',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : err.response.data.message,
-                        status : err.response.data.status
-                    });
-                })
+                this.markerInfo.index = index;
+                this.markerInfo.date = u.createdDate;
+                this.markerInfo.userName = u.userName;
+                this.markerInfo.workOrderName = u.workOrderName;
+                this.markerInfo.latitude = u.position.lat;
+                this.markerInfo.longitude = u.position.lng;
 
-            },
-            countLocation(){
-
-                let lThis = this;
-                let url = this.$store.state.baseUrl;
-
-                this.locationInterval = setInterval(function(){
-
-                    lThis.$http.post(url+"/location/count-by-user",{
-                        id : lThis.selectedUserId,
-                        createdDate : lThis.date
-                    })
+                this.$http.get("https://maps.googleapis.com/maps/api/geocode/json?latlng="+u.position.lat+","+u.position.lng+"&key=AIzaSyAOHSMMhB3tSoIZuf8eRqQBeJbSl0CrfUw")
                     .then(res=>{
-
-                        console.log(res.data);
-                        if (res.data !== lThis.locations.length){
-                            lThis.addNewMarker();
+                        console.log(JSON.stringify(res));
+                        if (res.data.status==="OK"){
+                            this.markerInfo.formattedAddress = res.data.results[0].formatted_address;
                         }
-
                     })
                     .catch(err=>{
-                        console.log(JSON.stringify(err));
+                        // console.log(err);
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : err.response.data.message,
+                            status : err.response.data.status
+                        });
                     })
-
-                }, 5000);
 
             },
-            addNewMarker(){
+            connect() {
 
-                let url = this.$store.state.baseUrl;
+                this.socket = new SockJS("http://192.168.0.3:3307/ws");
+                this.stompClient = Stomp.over(this.socket);
+                this.stompClient.debug = () => {};
+                this.stompClient.connect({},
+                    frame => {
+                        this.connected = true;
+                        this.stompClient.subscribe("/ws-response/location-by-user", tick => {
+                            this.userLocationList = JSON.parse(tick.body).list;
+                            // console.log(JSON.stringify(this.userLocationList))
+                        });
+                    },
+                    error => {
+                        console.log(error);
+                        this.connected = false;
+                    }
+                );
 
-                this.$http.post(url+"/location/get-new",{
-                    id : this.selectedUserId,
-                    createdDate : this.date
-                })
-                .then(res=>{
-
-                    console.log(JSON.stringify(res.data));
-                    this.locations.push(res.data.object);
-
-                    let marker = {
-                        lat: res.data.object.lat,
-                        lng: res.data.object.lon
-                    };
-                    this.markers.push({ position: marker });
-                    this.path.push({
-                        lat: res.data.object.lat,
-                        lng: res.data.object.lon
-                    })
-
-                })
-                .catch(err=>{
-                    // console.log(err);
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'Error',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : err.response.data.message,
-                        callBackMethod : this.showLocation,
-                        needTryAgain : true,
-                        status : err.response.data.status
-                    });
-                })
-
+            },
+        },
+        watch:{
+            connected : {
+                handler : function () {
+                    if (!this.connected){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Loading',
+                            bodyIcon : 'fas fa-sync fa-spin',
+                            bodyMsg : "Connection lost,Please wait ... connecting !",
+                        });
+                    } else {
+                        this.$refs.noti.closeNotification();
+                    }
+                }
             }
         }
     }

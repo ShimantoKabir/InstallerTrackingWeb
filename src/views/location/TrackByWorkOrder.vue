@@ -64,39 +64,67 @@
                             <div class="my-div-body-100" >
                                 <gmap-map :center="center" :zoom="10" style="width:100%;  height: 500px;" >
                                     <span v-for="(ul,i) in userLocationList" >
-                                        
-                                        <gmap-marker
+
+                                        <gmap-marker v-on:click="getPosition(m,index)"
                                             :key="index"
-                                            v-for="(m, index) in ul.locationList"
-                                            :label="getLevel(index+1,ul.locationList.length)"
+                                            v-for="(m,index) in ul.locationList"
+                                            :label="{ text: index.toString(),color : 'white'}"
                                             :draggable="true"
                                             :position="m.position">
 
-                                            <gmap-circle v-if="index===0"
+                                            <gmap-circle
                                                 :center="m.position"
-                                                :radius="1000"
+                                                :radius="3000"
                                                 :options="{fillColor:'green',fillOpacity:1.0}"
                                                 :visible="true">
-                                            </gmap-circle>
-
-                                            <gmap-circle v-else-if="index+1===ul.locationList.length"
-                                                 :center="m.position"
-                                                 :radius="1000"
-                                                 :options="{fillColor:'red',fillOpacity:1.0}"
-                                                 :visible="true">
-                                            </gmap-circle>
-
-                                            <gmap-circle v-else
-                                                 :center="m.position"
-                                                 :radius="1000"
-                                                 :options="{fillColor:'blue',fillOpacity:1.0}"
-                                                 :visible="true">
                                             </gmap-circle>
 
                                         </gmap-marker>
 
                                         <gmap-polyline v-bind:path.sync="ul.locationList" v-bind:options="{ strokeColor:colorManager.generateRandomColor()}"> </gmap-polyline>
+
                                     </span>
+                                    <gmap-info-window @closeclick="isPosAddressInfoOpen=false"
+                                                      :opened="isPosAddressInfoOpen"
+                                                      :position="selectedMarkerPosition" >
+                                        <div v-if="markerInfo" >
+                                            <table class="my-tbl" >
+                                                <thead>
+                                                    <tr>
+                                                        <th>Item</th>
+                                                        <th>Description</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td>Index</td>
+                                                    <td>{{markerInfo.index}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Date</td>
+                                                    <td>{{markerInfo.date}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>User name</td>
+                                                    <td>{{markerInfo.userName}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Work order</td>
+                                                    <td>{{markerInfo.workOrderName}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Address</td>
+                                                    <td>{{markerInfo.formattedAddress}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Position</td>
+                                                    <td>latitude : {{markerInfo.latitude}} , Longitude : {{markerInfo.longitude}}</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <i v-else class="fas fa-sync fa-spin" ></i>
+                                    </gmap-info-window>
                                 </gmap-map>
                             </div>
                         </div>
@@ -122,7 +150,6 @@
             this.checkWebSocketConnection();
             this.getWorkOrder();
             this.connect();
-
         },
         data(){
             return{
@@ -138,28 +165,21 @@
                     lat: 25.699035,
                     lng: 88.703594
                 },
-                userLocationList : ''
+                isPosAddressInfoOpen : false,
+                selectedMarkerPosition : {},
+                userLocationList : '',
+                markerInfo : {
+                    index : '',
+                    date : '',
+                    userName : '',
+                    workOrderName : '',
+                    formattedAddress : '',
+                    latitude : '',
+                    longitude : ''
+                }
             }
         },
         methods:{
-            getLevel(i,ln){
-
-                let textColor = '';
-
-                if (i===1){
-                    textColor = "blue"
-                } else if (i===ln){
-                    textColor = "black"
-                } else {
-                    textColor = "white"
-                }
-
-                return {
-                    text: i.toString(),
-                    color : textColor
-                };
-
-            },
             checkWebSocketConnection(){
                 let lThis = this;
                 setInterval(function(){
@@ -261,7 +281,7 @@
                 this.stompClient.connect({},
                     frame => {
                         this.connected = true;
-                        this.stompClient.subscribe("/ws-response/locations", tick => {
+                        this.stompClient.subscribe("/ws-response/location-by-work-order", tick => {
                             this.userLocationList = JSON.parse(tick.body).list;
                             console.log(JSON.stringify(this.userLocationList))
                         });
@@ -275,6 +295,36 @@
             },
             closeMap(){
                 this.isMapOpen = false;
+            },
+            getPosition(m,index){
+
+                this.selectedMarkerPosition = m.position;
+                this.isPosAddressInfoOpen = true;
+
+                this.markerInfo.index = index;
+                this.markerInfo.date = m.createdDate;
+                this.markerInfo.userName = m.userName;
+                this.markerInfo.workOrderName = m.workOrderName;
+                this.markerInfo.latitude = m.position.lat;
+                this.markerInfo.longitude = m.position.lng;
+
+                this.$http.get("https://maps.googleapis.com/maps/api/geocode/json?latlng="+m.position.lat+","+m.position.lng+"&key=AIzaSyAOHSMMhB3tSoIZuf8eRqQBeJbSl0CrfUw")
+                    .then(res=>{
+                        console.log(JSON.stringify(res));
+                        if (res.data.status==="OK"){
+                            this.markerInfo.formattedAddress = res.data.results[0].formatted_address;
+                        }
+                    })
+                    .catch(err=>{
+                        // console.log(err);
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : err.response.data.message,
+                            status : err.response.data.status
+                        });
+                    })
+
             },
         },
         watch:{
