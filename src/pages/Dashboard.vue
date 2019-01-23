@@ -12,11 +12,12 @@
 
     import SideNavBar from "./../common/SideNavBar";
     import HeaderNavBar from "./../common/HeaderNavBar";
+    import CookieManager from "../Helper/CookieManager"
 
     export default {
         name: "Dashboard",
         mounted(){
-            console.log(this.$store.state.isLogIn);
+
         },
         data(){
           return{
@@ -35,7 +36,7 @@
         watch: {
             isSideNavBarOpen() {
                 try {
-                    var isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
+                    let isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
                     if (isSideNavBarOpen){
                         this.expandMyViewConStyle.width = '100%';
                         this.expandMyViewConStyle.marginLeft = '0%';

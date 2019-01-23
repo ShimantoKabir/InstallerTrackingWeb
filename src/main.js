@@ -4,6 +4,7 @@ import router from './router'
 import {store} from './store/store'
 import axios from 'axios'
 import * as VueGoogleMaps from "vue2-google-maps";
+import CookieManager from "./Helper/CookieManager"
 
 import '@/assets/css/grid.min.css'
 import '@/assets/css/main.css'
@@ -32,7 +33,7 @@ router.beforeEach((to, from, next) => {
 
     if (to.matched.some(record => record.meta.requiresAuth)) {
 
-        if (store.state.isLogIn) {
+        if (CookieManager.check("userInfo")) {
 
             let routerList = store.state.route;
             let isNextOk = true;
@@ -62,7 +63,7 @@ router.beforeEach((to, from, next) => {
 
     }else {
         // requiresAuth === false
-        if (store.state.isLogIn) {
+        if (CookieManager.check("userInfo")) {
             next({
                 name : 'Dashboard'
             })

@@ -3,6 +3,8 @@
 </template>
 <script>
 
+    import CookieManager from "./Helper/CookieManager"
+
     export default {
         name: "App",
         created() {
@@ -27,7 +29,6 @@
                     this.$store.state.route = loginInitialData.route;
                     this.$store.state.baseUrl = loginInitialData.baseUrl;
                     this.$store.state.userInfo = loginInitialData.userInfo;
-                    this.$store.state.isLogIn = loginInitialData.isLogIn;
                     localStorage.removeItem('loginInitialData')
                 }
             },
@@ -36,7 +37,7 @@
                 if (window.location.hash.includes("forgot-password") || window.location.hash.includes("email-verification")){
 
                 }else {
-                    if (!this.$store.state.isLogIn){
+                    if (CookieManager.check("userInfo")){
                         this.$router.push({path: '/'});
                     }
                 }

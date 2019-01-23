@@ -22,10 +22,13 @@
 </template>
 
 <script>
+
+    import CookieManager from "../Helper/CookieManager"
+
     export default {
         name: "SideNavBar",
         mounted(){
-            this.sideNavMenu = this.$store.state.menu[0].children;
+            this.getMenu();
         },
         computed:{
             isSideNavBarOpen(){
@@ -34,6 +37,7 @@
         },
         data() {
             return{
+                url : this.$store.state.baseUrl,
                 openSnbListNumber : -1,
                 sideNavMenu : [],
                 minimizeSideNavBarStyle:{
@@ -42,6 +46,44 @@
             }
         },
         methods:{
+            getMenu(){
+
+                this.$http.post(this.url+"/menu/get-by-department",{
+                    userBn : CookieManager.getParsedData("userInfo")
+                })
+                .then(response=>{
+
+                    console.log(JSON.stringify(response.data));
+
+                    if (response.data.code===200){
+
+                        this.sideNavMenu = response.data.list[0].children;
+                        this.$store.state.menu = response.data.list[0].children;
+
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : response.data.msg,
+                            callBackMethod : this.getMenu,
+                            needTryAgain : true,
+                            code : response.data.code
+                        });
+                    }
+                })
+                .catch(error=>{
+                    console.log(JSON.stringify(error.response.data));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.getMenu,
+                        needTryAgain : true,
+                        code : error.response.data.status
+                    });
+                })
+
+            },
             subMenuChildHead(i){
                 this.openSnbListNumber = i;
             }
@@ -49,7 +91,7 @@
         watch: {
             isSideNavBarOpen() {
                 try {
-                    var isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
+                    let isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
                     if (isSideNavBarOpen){
                         this.minimizeSideNavBarStyle.width = '0%';
                     } else {

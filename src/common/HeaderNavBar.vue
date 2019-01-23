@@ -36,7 +36,7 @@
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";
     import Notification from "../views/notificaiton/Notification";
-    import Messenger from "./../views/communication/Messenger"
+    import CookieManager from "../Helper/CookieManager"
 
     export default {
         name: "HeaderNavBar",
@@ -46,9 +46,11 @@
             this.setUserName(this.$store.state.userInfo.userName);
             this.getNotification();
             this.connect();
+            this.getRoute();
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 isHeaderNavSubMenuOpen : false,
                 isNotificationOpen : false,
                 clickCount: 0,
@@ -59,6 +61,43 @@
             }
         },
         methods:{
+            getRoute(){
+
+                this.$http.post(this.url+"/router/get-by-department",{
+                    userBn : CookieManager.getParsedData("userInfo")
+                })
+                .then(response=>{
+
+                    // console.log(JSON.stringify(response.data));
+
+                    if (response.data.code===200){
+
+                        this.$store.state.route = response.data.list;
+
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : response.data.msg,
+                            callBackMethod : this.getRoute,
+                            needTryAgain : true,
+                            code : response.data.code
+                        });
+                    }
+                })
+                .catch(error=>{
+                    console.log(JSON.stringify(error.response.data));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.getRoute,
+                        needTryAgain : true,
+                        code : error.response.data.status
+                    });
+                })
+
+            },
             checkWebSocketConnection(){
                 let lThis = this;
                 setInterval(function(){
@@ -77,10 +116,10 @@
                 this.$store.state.isSideNavBarOpen = !this.$store.state.isSideNavBarOpen;
             },
             logout(){
-                this.$store.state.isLogIn = false;
                 this.$store.state.menu = "";
                 this.$store.state.route = "";
                 this.$store.state.userInfo = '';
+                CookieManager.delete("userInfo");
                 this.$router.push({
                     path: '/',
                     name: 'LoginReg',
@@ -95,21 +134,19 @@
             },
             getNotification(){
 
-                let url = this.$store.state.baseUrl;
-
                 if (this.conversationId!==0){
 
-                    this.$http.post(url+"/notification/get-by-receiver",{
-                        receiver : this.$store.state.userInfo.id
+                    this.$http.post(this.url+"/notification/get-by-receiver",{
+                        notificationBn : {
+                            receiver : CookieManager.getParsedData("userInfo").id
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
-
-                        console.log(JSON.stringify(res.data));
                         this.serverNotification = res.data.list;
                         this.countUnseenNotification(this.serverNotification);
-
                     })
                     .catch(err=>{
-
+                        console.log(JSON.stringify(err));
                     })
 
                 }
@@ -121,11 +158,9 @@
                 this.stompClient.connect({},
                     frame => {
                         this.connected = true;
-                        // console.log(frame);
                         this.stompClient.subscribe("/ws-response/notifications", tick => {
                             let notificationsList = JSON.parse(tick.body).list;
                             let obj = JSON.parse(tick.body).object;
-                            // console.log(notificationsList);
                             if (notificationsList!==null){
                                 if (this.$store.state.userInfo.id === obj.receiver){
                                     this.serverNotification = notificationsList;
@@ -142,12 +177,13 @@
             },
             goDestination(n){
 
-                let url = this.$store.state.baseUrl;
-
                 if (this.conversationId!==0){
 
-                    this.$http.post(url+"/notification/seen",{
-                        id : n.id
+                    this.$http.post(this.url+"/notification/seen",{
+                        notificationBn : {
+                            id : n.id
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     })
                     .then(res=>{
 
@@ -164,16 +200,16 @@
                         }
 
                     })
-                        .catch(err=>{
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : err.response.data.message,
-                                callBackMethod : this.manageFriendRequest,
-                                needTryAgain : true,
-                                status : err.response.data.status
-                            });
-                        })
+                    .catch(err=>{
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : err.response.data.message,
+                            callBackMethod : this.manageFriendRequest,
+                            needTryAgain : true,
+                            status : err.response.data.status
+                        });
+                    })
 
                 }
             },
@@ -183,7 +219,6 @@
 
                 for (let i = 0; i < notifications.length; i++) {
 
-                    // console.log(JSON.stringify(notifications[i]));
                     if (notifications[i].isSeen===0){
                         this.unseenNotification++;
                     }

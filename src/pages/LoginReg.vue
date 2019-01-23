@@ -64,7 +64,7 @@
 
     import Dashboard from "./Dashboard";
     import Notification from "../views/notificaiton/Notification";
-    import MyCookie from "../Helper/MyCookie";
+    import CookieManager from "../Helper/CookieManager";
 
     export default {
         name: "LoginReg",
@@ -74,8 +74,7 @@
             this.styleObject.marginTop = this.wh.toString()+"px";
         },
         mounted(){
-            this.$store.state.userInfo = '';
-            console.log(this.$store.state.isLogIn);
+
         },
         data(){
             return{
@@ -165,9 +164,12 @@
 
                     if (response.data.code===200){
 
+                        this.$refs.noti.closeNotification();
                         this.$store.state.userInfo = response.data.object;
-                        MyCookie.setCookie("userInfo",JSON.stringify(response.data.object),0);
-                        this.getInitialData()
+
+                        CookieManager.set("userInfo",JSON.stringify(response.data.object),0);
+                        this.$router.push({path: '/dashboard'});
+
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -262,53 +264,6 @@
                         status : 400
                     });
                 });
-
-            },
-            getInitialData(){
-
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/initial-data",{
-                    userBn : this.$store.state.userInfo
-                })
-                .then(response=>{
-                    if (response.data.code===200){
-
-                        this.$store.state.route = response.data.list[0].list;
-                        this.$store.state.menu = response.data.list[1].list;
-                        this.$store.state.isLogIn = true;
-
-                        console.log(JSON.stringify(this.$store.state));
-
-                        this.$router.push({
-                            path: '/dashboard',
-                            name: 'Dashboard',
-                            component: Dashboard
-                        });
-
-                    }else {
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Error',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : response.data.msg,
-                            width : '30%',
-                            callBackMethod : this.getInitialData,
-                            needTryAgain : true,
-                            status : 400
-                        });
-                    }
-                })
-                .catch(error=>{
-                    console.log(JSON.stringify(error));
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'Error',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : "Initial data getting error!",
-                        width : '30%',
-                        callBackMethod : this.getInitialData,
-                        needTryAgain : true,
-                        status : 400
-                    });
-                })
 
             },
             goForgotPasswordLayout(){

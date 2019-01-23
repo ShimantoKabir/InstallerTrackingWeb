@@ -6,9 +6,8 @@ Vue.use(Vuex);
 export const store = new Vuex.Store({
     state: {
         isSideNavBarOpen : true,
-        isLogIn : false,
         menu : '',
-        route : '',
+        route : [],
         userInfo : '',
         baseUrl : 'http://192.168.0.3:3307'
     }
