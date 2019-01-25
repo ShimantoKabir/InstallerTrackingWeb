@@ -83,7 +83,10 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
+
     export default {
 
         name: "SetMenuPermission",
@@ -93,6 +96,7 @@
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 departments : [],
                 selectedDepartmentId : '',
                 existingMenu : [],
@@ -104,49 +108,58 @@
                 },
                 clickedChildMenu : '',
                 clickedParentMenu : '',
-                clickedSideName : ''
+                clickedSideName : '',
+                needToCloseNotification : true
             }
         },
         methods:{
             reload(){
+                this.needToCloseNotification = true;
                 this.getInitialData();
             },
             getInitialData(){
 
-                let url = this.$store.state.baseUrl;
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-spin fa-sync',
+                    bodyMsg : 'Please wait ... !'
+                });
 
-                this.$http.post(url+"/department/get-by-user",{
-                    userBn : this.$store.state.userInfo
+                this.$http.post(this.url+"/department/get-by-user",{
+                    userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(res=>{
 
                     if (res.data.code===200){
+
                         this.departments = res.data.list;
                         this.selectedDepartmentId = res.data.list[0].oId;
                         this.getMenuByDepartment(this.selectedDepartmentId,false);
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
+                        }
+
                     } else {
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Initial data processing error',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Can not get department list !',
-                            width : '30%',
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.getInitialData,
                             needTryAgain : true,
-                            status : 400
+                            code : res.data.msg
                         });
                     }
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Initial data processing error',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Can not get department list !',
-                        width : '60%',
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : 400
+                        code : err.response.data.status
                     });
                 })
 
@@ -158,10 +171,11 @@
             },
             getMenuByDepartment(selectedDepartmentId,repeat){
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/menu/get-by-department-id",{
-                    deptId : selectedDepartmentId
+                this.$http.post(this.url+"/menu/get-by-department",{
+                    departmentBn : {
+                        id : selectedDepartmentId
+                    },
+                    userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(response=>{
                     if (response.data.code===200){
@@ -177,26 +191,24 @@
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Processing result',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Did not get menu list',
-                            width : '30%',
+                            bodyMsg : response.data.msg,
                             callBackMethod : this.getMenuByDepartment,
                             needTryAgain : true,
-                            status : 400
+                            code : response.data.code
                         });
                     }
                 })
                 .catch(error=> {
-                    console.log(error);
+                    console.log(JSON.stringify(error.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Processing result',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Did not get menu list',
-                        width : '30%',
-                        callBackMethod : this.getMenuByDepartment,
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : 400
+                        code : error.response.data.status
                     });
                 });
 
@@ -282,10 +294,14 @@
                 
                 let requestData = {
                     userBn : {
-                        id : this.$store.state.userInfo.id,
-                        deptId : this.selectedDepartmentId
+                        id : CookieManager.getParsedData("userInfo").id,
+                        deptId : this.selectedDepartmentId,
+                        userEmail : CookieManager.getParsedData("userInfo").userEmail
                     },
-                    integerList : []
+                    integerList : [],
+                    menuBn :{
+                        link : this.$route.path
+                    }
                 };
 
                 for (let i = 0; i < this.selectedMenu.length; i++) {
@@ -296,41 +312,41 @@
                     }
                 }
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/menu/set-permission",requestData)
+                this.$http.post(this.url+"/menu/set-permission",requestData)
                 .then(res=>{
-                    console.log(res.data);
-                    this.getInitialData();
+                    // console.log(res.data);
                     if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+                        this.getInitialData();
+
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Processing result',
+                            title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
-                            bodyMsg : 'Set menu permission successful !',
-                            width : '30%'
+                            bodyMsg : res.data.msg,
+                            code : res.data.code
                         });
+
                     } else {
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Processing result',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Set menu permission unsuccessful !',
-                            width : '30%',
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.save,
                             needTryAgain : true,
-                            status : 400
+                            code : res.data.code
                         });
                     }
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Processing result',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Set menu permission unsuccessful !',
-                        width : '30%',
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.save,
                         needTryAgain : true,
-                        status : 400
+                        code : err.response.data.status
                     });
                 })
 

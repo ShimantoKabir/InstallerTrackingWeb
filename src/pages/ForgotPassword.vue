@@ -70,6 +70,7 @@
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 isTokenAvailable : false,
                 token : '',
                 email : '',
@@ -85,37 +86,37 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/user/get-forgot-password-link",{
-                    userEmail : this.email
+                this.$http.post(this.url+"/user/get-forgot-password-link",{
+                    userBn : {
+                        userEmail : this.email
+                    }
                 }).then(response=>{
                     if (response.data.code===200){
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : response.data.msg,
-                            state : response.data.code
+                            code : response.data.code
                         });
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Password change link did not send to your email !',
+                            bodyMsg : response.data.msg,
                             callBackMethod : this.sendForgotPasswordLink,
                             needTryAgain : true,
-                            status : 400
+                            code : response.data.code
                         });
                     }
                 }).catch(error=> {
-                    console.log(error.status);
+                    console.log(JSON.stringify(error.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Password change link did not send to your email !',
+                        bodyMsg : error.response.data.message,
                         callBackMethod : this.sendForgotPasswordLink,
                         needTryAgain : true,
-                        status : 400
+                        code : error.response.data.status
                     });
                 });
             },
@@ -130,19 +131,19 @@
                     bodyMsg : 'Please wait, changing password operation is going on !',
                 });
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/user/verify-forgot-password-token",{
-                    token : this.token,
-                    newPassword : this.newPassword
-
+                this.$http.post(this.url+"/user/verify-forgot-password-token",{
+                    userBn : {
+                        token : this.token,
+                        newPassword : this.newPassword
+                    }
                 }).then(response=>{
                     console.log(response.data);
                     if (response.data.code===200){
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
-                            bodyMsg : response.data.msg
+                            bodyMsg : response.data.msg,
+                            code: response.data.code
                         });
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -151,18 +152,18 @@
                             bodyMsg : response.data.msg,
                             callBackMethod : this.verifyForgotPasswordToken,
                             needTryAgain : true,
-                            status : 400
+                            code : response.data.code
                         });
                     }
                 }).catch(error=> {
-                    console.log(error.status);
+                    console.log(JSON.stringify(error.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : "Sorry , can't change your password !",
+                        bodyMsg : error.response.data.message,
                         callBackMethod : this.verifyForgotPasswordToken,
                         needTryAgain : true,
-                        status : 400
+                        code : error.response.data.status
                     });
                 });
 

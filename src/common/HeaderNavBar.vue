@@ -43,7 +43,7 @@
         components: {Notification},
         mounted(){
             this.checkWebSocketConnection();
-            this.setUserName(this.$store.state.userInfo.userName);
+            this.setUserName(CookieManager.getParsedData("userInfo").userName);
             this.getNotification();
             this.connect();
             this.getRoute();
@@ -120,6 +120,7 @@
                 this.$store.state.route = "";
                 this.$store.state.userInfo = '';
                 CookieManager.delete("userInfo");
+                clearInterval(this.$store.state.userPresence);
                 this.$router.push({
                     path: '/',
                     name: 'LoginReg',
@@ -159,6 +160,7 @@
                     frame => {
                         this.connected = true;
                         this.stompClient.subscribe("/ws-response/notifications", tick => {
+                            console.log(tick.body);
                             let notificationsList = JSON.parse(tick.body).list;
                             let obj = JSON.parse(tick.body).object;
                             if (notificationsList!==null){
@@ -189,7 +191,12 @@
 
                         if (res.data.code===200){
                             this.isNotificationOpen = false;
-                            this.stompClient.send("/ws-request/get-notification-by-receiver",this.$store.state.userInfo.id,{});
+                            let req = {
+                                userBn : {
+                                    id : CookieManager.getParsedData("userInfo").id
+                                }
+                            };
+                            this.stompClient.send("/ws-request/get-notification-by-receiver",JSON.stringify(req),{});
                             this.$router.push({path: n.link});
                         } else {
                             this.$refs.noti.setNotificationProperty({
@@ -235,7 +242,24 @@
                             bodyIcon : 'fas fa-sync fa-spin',
                             bodyMsg : "Connection lost,Please wait ... connecting !",
                         });
+
+                        clearInterval(this.$store.state.userPresence);
+
                     } else {
+
+                        let This = this;
+
+                        this.$store.state.userPresence = setInterval(function(){
+                            console.log("Updating user presence .... ");
+                            let req = {
+                                userBn : {
+                                    id : CookieManager.getParsedData("userInfo").id
+                                }
+                            };
+                            This.stompClient.send("/ws-request/update-user-presence",JSON.stringify(req),{});
+
+                        }, 5000);
+
                         this.$refs.noti.closeNotification();
                     }
                 }

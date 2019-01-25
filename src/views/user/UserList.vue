@@ -98,7 +98,9 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
 
     export default {
         name: "UserList",
@@ -133,7 +135,7 @@
 
                 let url = this.$store.state.baseUrl;
                 this.$http.post(url+"/user/manage-init",{
-                    userBn : this.$store.state.userInfo
+                    userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(res=>{
 
@@ -145,6 +147,7 @@
                         this.departmentList = res.data.departmentBnList;
 
                         if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
+
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Initial data processing error',
@@ -202,7 +205,7 @@
 
                 let url = this.$store.state.baseUrl;
                 this.$http.post(url+"/user/manage",{
-                    userBn : this.$store.state.userInfo,
+                    userBn : CookieManager.getParsedData("userInfo"),
                     manageUserBn : this.manageUserInfo
                 })
                 .then(res=>{

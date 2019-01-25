@@ -24,6 +24,11 @@
 
         name: "EmailVerification",
         components: {notification},
+        data(){
+            return{
+                url : this.$store.state.baseUrl
+            }
+        },
         mounted(){
             if(this.$route.params.token){
                 this.activeUserAccount();
@@ -33,59 +38,46 @@
             activeUserAccount(){
 
                 this.$refs.noti.setNotificationProperty({
-                    title : 'Account active processing',
+                    title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',
-                    bodyMsg : 'Please wait ...',
-                    width : '30%'
+                    bodyMsg : 'Please wait ... !',
                 });
 
-                let url = this.$store.state.baseUrl;
-
-                this.$http.post(url+"/user/active",{
-                    token : this.$route.params.token
+                this.$http.post(this.url+"/user/active",{
+                    userBn : {
+                        token : this.$route.params.token
+                    }
                 })
                 .then(response=>{
-                    if (response.status===200){
-                        if (response.data.code === 200){
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Processing result',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : 'Account active successful, when admin will approved your account then you can login !',
-                                status : 200
-                            });
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Processing result',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : response.data.msg,
-                                callBackMethod : this.activeUserAccount,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
+
+                    if (response.data.code === 200){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : response.data.msg,
+                            code : response.data.code
+                        });
                     } else {
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Processing result',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Account active unsuccessful !',
-                            width : '30%',
+                            bodyMsg : response.data.msg,
                             callBackMethod : this.activeUserAccount,
                             needTryAgain : true,
-                            status : 400
+                            code : response.data.code
                         });
                     }
 
                 })
                 .catch(error=> {
-                    console.log(error);
+                    console.log(JSON.stringify(error.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Processing result',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Account active unsuccessful !',
-                        width : '30%',
-                        callBackMethod : this.activeUserAccount,
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : 400
+                        code : error.response.data.status
                     });
                 });
             },

@@ -38,10 +38,16 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "./../../Helper/CookieManager"
+
     export default {
         name: "ChangePassword",
         components: {Notification},
+        mounted(){
+            // alert(this.$route.path);
+        },
         data(){
             return{
                 passwordMode:{
@@ -61,9 +67,15 @@
 
                 let url = this.$store.state.baseUrl;
                 this.$http.post(url+"/user/change-password",{
-                    id : this.$store.state.userInfo.id,
-                    password : this.passwordMode.oldPassword,
-                    newPassword : this.passwordMode.newPassword
+                    userBn : {
+                        id : CookieManager.getParsedData("userInfo").id,
+                        userEmail : CookieManager.getParsedData("userInfo").userEmail,
+                        password : this.passwordMode.oldPassword,
+                        newPassword : this.passwordMode.newPassword
+                    },
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -72,7 +84,7 @@
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -81,19 +93,19 @@
                             bodyMsg : 'Password change unsuccessful !',
                             callBackMethod : this.saveNewPassword,
                             needTryAgain : true,
-                            status : 400
+                            code : 400
                         });
                     }
 
                 }).catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Password change unsuccessful !',
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.saveNewPassword,
                         needTryAgain : true,
-                        status : 400
+                        code : err.response.data.status
                     });
                 })
             }

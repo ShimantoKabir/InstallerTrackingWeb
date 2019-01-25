@@ -42,7 +42,9 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
 
     export default {
         name: "Profile",
@@ -61,9 +63,9 @@
         },
         methods: {
             getInitData(){
-                this.userInfoModel.userName = this.$store.state.userInfo.userName;
-                this.userInfoModel.userEmail = this.$store.state.userInfo.userEmail;
-                this.userInfoModel.deptName = this.$store.state.userInfo.deptName;
+                this.userInfoModel.userName = CookieManager.getParsedData("userInfo").userName;
+                this.userInfoModel.userEmail = CookieManager.getParsedData("userInfo").userEmail;
+                this.userInfoModel.deptName = CookieManager.getParsedData("userInfo").deptName;
             },
             saveUserProfile(){
 
@@ -76,53 +78,46 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/save/profile",this.$store.state.userInfo)
+                this.$http.post(url+"/user/save/profile",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn :{
+                        link : this.$route.path
+                    }
+                })
                 .then(res=>{
-                    console.log(res.data);
-                    if (res.status===200){
 
-                        if (res.data.code===200){
+                    if (res.data.code===200){
 
-                            this.getInitData();
+                        this.getInitData();
 
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code
-                            });
-
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : 'Can not save user profile !',
-                                callBackMethod : this.saveUserProfile,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            code : res.data.code
+                        });
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Can not save user profile !',
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.saveUserProfile,
                             needTryAgain : true,
-                            status : 400
+                            code : res.data.code
                         });
                     }
+
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Can save user profile !',
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.saveUserProfile,
                         needTryAgain : true,
-                        status : 400
+                        code : err.response.data.status
                     });
                 })
             }

@@ -108,6 +108,7 @@
 <script>
 
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";
 
@@ -116,12 +117,13 @@
         components: {Notification},
         mounted(){
             this.checkWebSocketConnection();
-            this.loggedInUserId = this.$store.state.userInfo.id;
+            this.loggedInUserId = CookieManager.getParsedData("userInfo").id;
             this.connect();
             this.scrollToBottom();
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 loggedInUserId : '',
                 userList : [],
                 userInfo : '',
@@ -167,12 +169,14 @@
                 this.selectedUserInfo.lastPresenceDate = obj.lastPresenceDate;
                 this.selectedUserInfo.id = obj.id;
 
-                if (obj.id !== this.$store.state.userInfo.id) {
+                if (obj.id !== CookieManager.getParsedData("userInfo").id) {
 
-                    let url = this.$store.state.baseUrl;
-                    this.$http.post(url+"/friend-request/check-friend",{
-                        sender : this.$store.state.userInfo.id,
-                        receiver : obj.id
+                    this.$http.post(this.url+"/friend-request/check-friend",{
+                        friendRequestBn : {
+                            sender : CookieManager.getParsedData("userInfo").id,
+                            receiver : obj.id
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
 
                         console.log(JSON.stringify(res.data));
@@ -186,8 +190,6 @@
                             this.fetchConversation();
                         }
 
-
-
                     })
                     .catch(err=>{
                         console.log(JSON.stringify(err));
@@ -197,7 +199,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.manageFriendRequest,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     })
 
@@ -214,14 +216,16 @@
                     bodyMsg : "Please wait ... !",
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/friend-request/manage",{
-                    areFriend : i,
-                    sender : this.$store.state.userInfo.id,
-                    receiver : receiver,
-                    id : this.friendRequestId,
-                    senderEmail : this.$store.state.userInfo.userEmail,
-                    receiverEmail : this.selectedUserInfo.email
+                this.$http.post(this.url+"/friend-request/manage",{
+                    friendRequestBn : {
+                        areFriend : i,
+                        sender : CookieManager.getParsedData("userInfo").id,
+                        receiver : receiver,
+                        id : this.friendRequestId,
+                        senderEmail : CookieManager.getParsedData("userInfo").userEmail,
+                        receiverEmail : this.selectedUserInfo.email
+                    },
+                    userBn : CookieManager.getParsedData("userInfo")
                 }).then(res=>{
 
                     console.log(JSON.stringify(res.data));
@@ -257,19 +261,20 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.manageFriendRequest,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 
             },
             fetchConversation(){
 
-                let url = this.$store.state.baseUrl;
-
                 if (this.conversationId!==0){
 
-                    this.$http.post(url+"/conversation/get-by-conversation-id",{
-                        conversationId : this.conversationId
+                    this.$http.post(this.url+"/conversation/get-by-conversation-id",{
+                        conversationBn : {
+                            conversationId : this.conversationId
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
 
                         if (res.data.code===200){
@@ -283,7 +288,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.fetchConversation,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     }).finally(res=>{
                         this.scrollToBottom();
@@ -296,12 +301,14 @@
 
                 if (this.selectedUserInfo.areFriend===2){
 
-                    let url = this.$store.state.baseUrl;
-                    this.$http.post(url+"/conversation/save",{
-                        sender : this.$store.state.userInfo.id,
-                        receiver : this.selectedUserInfo.id,
-                        conversationId : this.conversationId,
-                        speech : this.speech
+                    this.$http.post(this.url+"/conversation/save",{
+                        conversationBn : {
+                            sender : CookieManager.getParsedData("userInfo").id,
+                            receiver : this.selectedUserInfo.id,
+                            conversationId : this.conversationId,
+                            speech : this.speech
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
 
                         if (res.data.code===200){
@@ -319,7 +326,7 @@
                                 bodyMsg : res.data.msg,
                                 callBackMethod : this.sendSpeech,
                                 needTryAgain : true,
-                                status : res.data.code
+                                code : res.data.code
                             });
                         }
 
@@ -331,7 +338,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.sendSpeech,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     })
 
@@ -351,20 +358,34 @@
             },
             speechFocus(){
 
-                let url = this.$store.state.baseUrl;
-
                 if (this.conversationId!==0){
 
-                    this.$http.post(url+"/conversation/seen-the-unseen",{
-                        conversationId : this.conversationId,
-                        sender : this.loggedInUserId,
-                        receiver : this.selectedUserInfo.id
+                    this.$http.post(this.url+"/conversation/seen-the-unseen",{
+                        conversationBn : {
+                            conversationId : this.conversationId,
+                            sender : this.loggedInUserId,
+                            receiver : this.selectedUserInfo.id
+                        },
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
 
                         console.log(this.conversation.length);
-                        for (let i = 0; i < this.conversation.length; i++) {
-                            this.conversation[i].isSeen = 1
+
+                        if (res.data.code===400){
+                            this.$refs.noti.setNotificationProperty({
+                                title : 'Error',
+                                bodyIcon : 'fas fa-exclamation-circle',
+                                bodyMsg : res.data.msg,
+                                callBackMethod : this.speechFocus,
+                                needTryAgain : true,
+                                code : res.data.code
+                            });
+                        }else {
+                            for (let i = 0; i < this.conversation.length; i++) {
+                                this.conversation[i].isSeen = 1
+                            }
                         }
+
 
                     }).catch(err=>{
                         this.$refs.noti.setNotificationProperty({
@@ -373,7 +394,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.fetchConversation,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     })
 
@@ -382,16 +403,24 @@
             },
             speechBlur(){
 
-                let url = this.$store.state.baseUrl;
-
                 if (this.conversationId!==0){
 
-                    this.$http.post(url+"/user/change-typing-status",{
-                        id : this.loggedInUserId
+                    this.$http.post(this.url+"/user/change-typing-status",{
+                        userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
 
                         // console.log(JSON.stringify(res.data));
                         // this.conversation = res.data.list;
+                        if (res.data.code===400){
+                            this.$refs.noti.setNotificationProperty({
+                                title : 'Error',
+                                bodyIcon : 'fas fa-exclamation-circle',
+                                bodyMsg : res.data.msg,
+                                callBackMethod : this.speechBlur,
+                                needTryAgain : true,
+                                code : res.data.code
+                            });
+                        }
 
                     }).catch(err=>{
                         this.$refs.noti.setNotificationProperty({

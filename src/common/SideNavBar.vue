@@ -49,11 +49,13 @@
             getMenu(){
 
                 this.$http.post(this.url+"/menu/get-by-department",{
-                    userBn : CookieManager.getParsedData("userInfo")
+                    departmentBn : {
+                        id : CookieManager.getParsedData("userInfo").deptId
+                    }
                 })
                 .then(response=>{
 
-                    console.log(JSON.stringify(response.data));
+                    // console.log(JSON.stringify(response.data));
 
                     if (response.data.code===200){
 

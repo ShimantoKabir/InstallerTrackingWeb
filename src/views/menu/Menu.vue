@@ -107,6 +107,8 @@
 <script>
 
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager";
+
     export default {
         name: "Menu",
         components: {Notification},
@@ -115,6 +117,7 @@
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 menu : [],
                 selectedNode : {
                     i : '',
@@ -126,20 +129,38 @@
                     link : '',
                     text: '',
                     icon: '',
-                }
+                },
+                needToCloseNotification : true
             }
         },
         methods : {
             getInitialData(){
 
-                this.$http.post(this.$store.state.baseUrl+"/menu/get-by-user-id",this.$store.state.userInfo)
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                this.$http.post(this.url+"/menu/get-by-department",{
+                    departmentBn : {
+                        id : CookieManager.getParsedData("userInfo").deptId
+                    },
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link: this.$route.path
+                    }
+                })
                 .then(res=>{
 
-                    console.log(res.data);
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.status===200){
 
-                        this.menu = res.data;
+                        this.menu = res.data.list;
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
+                        }
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
@@ -340,6 +361,8 @@
             },
             save(){
 
+                console.log(JSON.stringify(this.menu));
+
                 this.$refs.noti.setNotificationProperty({
                     title : 'Processing',
                     bodyIcon : 'fas fa-sync fa-spin',
@@ -347,29 +370,46 @@
                 });
 
                 this.$http.post(this.$store.state.baseUrl+"/menu/save",{
-                    userBn : this.$store.state.userInfo,
-                    menuBnList : this.menu
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBnList : this.menu,
+                    menuBn : {
+                        link: this.$route.path
+                    }
                 }).then(res=>{
 
-                    console.log(res.data);
+                    console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
+
+                        this.needToCloseNotification = false;
+
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
+                            code: res.data.code
+                        });
+
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.getInitialData,
+                            needTryAgain : true,
+                            code : res.data.code
                         });
                     }
 
                 }).catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : "Menu save unsuccessful !",
+                        bodyMsg : err.response.data.message,
                         callBackMethod : this.save,
                         needTryAgain : true,
-                        status : 400
+                        code : err.response.data.status
                     });
                 })
             },

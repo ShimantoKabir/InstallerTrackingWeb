@@ -40,7 +40,7 @@
                                             <td>{{i+1}}</td>
                                             <td>{{dl.name}}</td>
                                             <td>{{dl.rank}}</td>
-                                            <td><i class="fas fa-edit" ></i></td>
+                                            <td><i class="fas fa-edit" v-on:click="setUpdateData(dl)" ></i></td>
                                             <td><i class="fas fa-trash" ></i></td>
                                         </tr>
                                     </tbody>
@@ -48,7 +48,9 @@
                             </div>
                         </div>
                         <div v-show="selectedTab===0" class="my-tab-foot" >
-                            <button class="my-btn" v-on:click="verifyInput('saveDepartment')" >Save</button>
+                            <button class="my-btn" v-if="department.id===-1" v-on:click="verifyInput('save')" >Save</button>
+                            <button class="my-btn" v-else v-on:click="verifyInput('update')" >update</button>
+                            <button class="my-btn"  v-on:click="reset" >Reset</button>
                         </div>
                     </div>
                 </div>
@@ -59,7 +61,10 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager";
+
     export default {
         name: "CreateDepartment",
         components: {Notification},
@@ -68,9 +73,11 @@
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Create department','Department list'],
                 selectedTab : 0,
                 department : {
+                    id : -1,
                     name : '',
                     rank : '',
                 },
@@ -80,7 +87,7 @@
         },
         methods:{
             verifyInput(which){
-                if (which==="saveDepartment") {
+                if (which==="save") {
                     if (this.department.name===""){
                         this.$refs.noti.setNotificationProperty({
                             title : 'Alert',
@@ -100,7 +107,31 @@
                             title : 'Alert',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : 'Would you like to submit ? ',
-                            callBackMethod : this.saveDepartment,
+                            callBackMethod : this.save,
+                            needConfirmation : true
+                        });
+                    }
+                }else if (which==="update") {
+                    if (this.department.name===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Department name required !',
+                            needOk : true
+                        });
+                    } else if (this.department.rank==="") {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Department rank required !',
+                            needOk : true
+                        });
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ? ',
+                            callBackMethod : this.update,
                             needConfirmation : true
                         });
                     }
@@ -114,9 +145,8 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/department/get-by-user",{
-                    userBn : this.$store.state.userInfo
+                this.$http.post(this.url+"/department/get-by-user",{
+                    userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(res=>{
                     if (res.data.code===200){
@@ -148,7 +178,7 @@
             tabBtnClickListener(i){
                 this.selectedTab = i;
             },
-            saveDepartment(){
+            save(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Department save processing',
@@ -160,45 +190,118 @@
 
                 this.$http.post(url+"/department/save",{
                     departmentBn : this.department,
-                    userBn : this.$store.state.userInfo
+                    userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(response=>{
 
-                    console.log(response.data);
+                    // console.log(response.data);
 
                     if (response.data.code===200){
 
                         this.getInitData();
+
                         this.needToCloseNotification = false;
+
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Processing result',
+                            title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : response.data.msg,
-                            needOk : true
+                            needOk : true,
+                            code : response.data.code
                         });
+
                     }else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Processing result',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : response.data.msg,
-                            callBackMethod : this.saveDepartment,
+                            callBackMethod : this.save,
                             needTryAgain : true,
-                            status : 400
+                            code : response.data.code
                         });
                     }
 
                 })
                 .catch(error=> {
-                    console.log(error);
+                    console.log(JSON.stringify(error.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'Processing result',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : 'Department not save successfully !',
-                        callBackMethod : this.saveDepartment,
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.save,
                         needTryAgain : true,
-                        status : 400
+                        code : error.response.data.status
                     });
                 });
+            },
+            setUpdateData(d){
+                this.selectedTab  = 0;
+                this.department.id = d.id;
+                this.department.name = d.name;
+                this.department.rank = d.rank;
+            },
+            reset(){
+                this.selectedTab = 0;
+                this.department.id = -1;
+                this.department.name = "";
+                this.department.rank = "";
+            },
+            update(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Department save processing',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ...',
+                });
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.post(url+"/department/update",{
+                    departmentBn : this.department,
+                    userBn : CookieManager.getParsedData("userInfo")
+                })
+                .then(response=>{
+
+                    // console.log(response.data);
+
+                    if (response.data.code===200){
+
+                        this.getInitData();
+
+                        this.needToCloseNotification = false;
+
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : response.data.msg,
+                            needOk : true,
+                            code : response.data.code
+                        });
+
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Processing result',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : response.data.msg,
+                            callBackMethod : this.update,
+                            needTryAgain : true,
+                            code : response.data.code
+                        });
+                    }
+
+                })
+                .catch(error=> {
+                    console.log(JSON.stringify(error.response.data));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : error.response.data.message,
+                        callBackMethod : this.getInitialData,
+                        needTryAgain : true,
+                        code : error.response.data.status
+                    });
+                });
+
             }
         }
     }
