@@ -124,9 +124,9 @@
 </template>
 
 <script>
-    import Notification from "../notificaiton/Notification";
 
-    import {gmapApi} from 'vue2-google-maps'
+    import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
 
     export default {
         name: "Site",
@@ -137,6 +137,7 @@
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Create site','Site list'],
                 selectedTab : 0,
                 isMapOpen : false,
@@ -161,45 +162,48 @@
         methods:{
             getSiteList(){
 
-                let url = this.$store.state.baseUrl;
-
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-spin fa-sync',
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.get(url+"/site/get")
-                    .then(res=>{
+                this.$http.post(this.url+"/site/get",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
+                .then(res=>{
 
-                        console.log(JSON.stringify(res.data.list));
+                    console.log(JSON.stringify(res.data.list));
 
-                        if (res.data.code===200){
-                            this.siteList = res.data.list;
-                            if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.getSiteList,
-                                needTryAgain : true,
-                                status : res.data.code
-                            });
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(JSON.stringify(err));
+                    if (res.data.code===200){
+                        this.siteList = res.data.list;
+                        if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
+                    } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.getSiteList,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : res.data.code
                         });
-                    })
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getSiteList,
+                        needTryAgain : true,
+                        code : err.response.data.status
+                    });
+                })
 
             },
             tabBtnClickListener(i){
@@ -213,9 +217,14 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                let url = this.$store.state.baseUrl;
 
-                this.$http.post(url+"/site/save",this.site)
+                this.$http.post(this.url+"/site/save",{
+                    siteBn : this.site,
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
                 .then(res=>{
 
                     console.log(JSON.stringify(res.data));
@@ -230,12 +239,13 @@
                         this.site.name = '';
 
                         this.getSiteList();
+                        this.needToCloseNotification = false;
 
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code,
+                            code : res.data.code,
                             needOk : true
                         });
 
@@ -246,7 +256,7 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.saveSite,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     }
 
@@ -259,7 +269,7 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.saveSite,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 
@@ -334,58 +344,64 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                let url = this.$store.state.baseUrl;
+                this.$http.post(this.url+"/site/update",{
+                    siteBn : this.site,
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
+                .then(res=>{
 
-                this.$http.post(url+"/site/update",this.site)
-                    .then(res=>{
+                    console.log(JSON.stringify(res.data));
 
-                        console.log(JSON.stringify(res.data));
+                    if (res.data.code===200){
 
-                        if (res.data.code===200){
+                        this.site.address = '';
+                        this.site.id = -1;
+                        this.site.name = '';
+                        this.site.address = '';
+                        this.site.lat = '';
+                        this.site.lon = '';
+                        this.markerPosition.lat = '';
+                        this.markerPosition.lng = '';
+                        this.markerPosition.address = '';
 
-                            this.site.address = '';
-                            this.site.id = -1;
-                            this.site.name = '';
-                            this.site.address = '';
-                            this.site.lat = '';
-                            this.site.lon = '';
-                            this.markerPosition.lat = '';
-                            this.markerPosition.lng = '';
-                            this.markerPosition.address = '';
+                        this.getSiteList();
 
-                            this.getSiteList();
+                        this.needToCloseNotification = false;
 
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code,
-                                needOk : true
-                            });
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            code : res.data.code,
+                            needOk : true
+                        });
 
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.updateSite,
-                                needTryAgain : true,
-                                status : res.data.code
-                            });
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(JSON.stringify(err));
+                    } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.updateSite,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : res.data.code
                         });
-                    })
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.updateSite,
+                        needTryAgain : true,
+                        code : err.response.data.status
+                    });
+                })
 
             },
             reset(){

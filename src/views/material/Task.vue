@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                             <div v-show="selectedTab===0" class="my-tab-foot" >
-                                <button class="my-btn" v-on:click="saveTask" >Save</button>
+                                <button class="my-btn" v-on:click="verifyInput('save')" >Save</button>
                             </div>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                                 </div>
                                 <div class="my-div-foot" >
                                     <div class="my-div-foot-left" >
-                                        <button class="my-btn" v-on:click="updateTaskAttempt" >Update</button>
+                                        <button class="my-btn" v-on:click="verifyInput('update')" >Update</button>
                                     </div>
                                 </div>
                             </div>
@@ -129,18 +129,19 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager";
+
     export default {
         name: "Task",
         components: {Notification},
         mounted(){
             this.getInitData();
-            console.log(JSON.stringify(this.$store.state.userInfo));
-            this.task.modifiedBy = this.$store.state.userInfo.id;
-            console.log(JSON.stringify(this.task));
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Create task','Task list'],
                 selectedTab : 0,
                 task:{
@@ -149,7 +150,7 @@
                     duration : '',
                     cost : '',
                     taskSpecialist : -1,
-                    modifiedBy : ''
+                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id)
                 },
                 taskList : [],
                 userList : [],
@@ -158,6 +159,85 @@
             }
         },
         methods:{
+            verifyInput(which){
+                if (which==="save"){
+                    if (this.task.name==="") {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task name required !',
+                            code : 400
+                        });
+                    }else if (this.task.duration===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task duration required !',
+                            code : 400
+                        });
+                    } else if (this.task.cost===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task cost required !',
+                            code : 400
+                        });
+                    } else if (this.task.taskSpecialist===-1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Please select a specialist !',
+                            code : 400
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.save,
+                            needConfirmation : true,
+                        });
+                    }
+                } else if (which==="update") {
+                    if (this.task.name==="") {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task name required !',
+                            code : 400
+                        });
+                    }else if (this.task.duration===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task duration required !',
+                            code : 400
+                        });
+                    } else if (this.task.cost===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Task cost required !',
+                            code : 400
+                        });
+                    } else if (this.task.taskSpecialist===-1){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Please select a specialist !',
+                            code : 400
+                        });
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.update,
+                            needConfirmation : true,
+                        });
+                    }
+                }
+            },
             getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -166,9 +246,11 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/task/init-data",{
-                    userBn : this.$store.state.userInfo
+                this.$http.post(this.url+"/task/init-data",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -176,15 +258,8 @@
 
                     if (res.data.code===200){
 
-                        this.userList = res.data.list;
-
-                        if (res.data.taskResponse.code===200){
-                            this.taskList = res.data.taskResponse.list;
-                        } 
-                        
-                        if (res.data.userResponse.code===200){
-                            this.userList = res.data.userResponse.list;
-                        }
+                        this.taskList = res.data.taskResponse.list;
+                        this.userList = res.data.userResponse.list;
                         
                         if (this.needToCloseNotification) {this.$refs.noti.closeNotification();}
 
@@ -193,9 +268,9 @@
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
-                            callBackMethod : this.getUserList,
+                            callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            status : 400
+                            code : 400
                         });
                     }
 
@@ -208,12 +283,12 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 });
 
             },
-            saveTask(){
+            save(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -221,10 +296,12 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/task/save",{
-                    userBn : this.$store.state.userInfo,
-                    taskBn : this.task
+                this.$http.post(this.url+"/task/save",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    taskBn : this.task,
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -232,15 +309,15 @@
 
                     if (res.data.code===200){
 
-                        this.needToCloseNotification = false;
                         this.getInitData();
                         this.reset();
 
+                        this.needToCloseNotification = false;
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code,
+                            code : res.data.code,
                             needOk :true
                         });
 
@@ -252,21 +329,21 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.saveTask,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
 
                     }
 
                 })
                 .catch(err=>{
-                    console.log(JSON.stringify(res.data.msg));
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 
@@ -282,7 +359,7 @@
             closeUpdateTaskModel(){
                 this.isUpdateTaskModelOpen = false;
             },
-            updateTaskAttempt(){
+            update(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -290,10 +367,12 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/task/update",{
-                    userBn : this.$store.state.userInfo,
-                    taskBn : this.task
+                this.$http.post(this.url+"/task/update",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    taskBn : this.task,
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -303,14 +382,14 @@
 
                         this.getInitData();
                         this.isUpdateTaskModelOpen = false;
-                        this.needToCloseNotification = false;
                         this.reset();
 
+                        this.needToCloseNotification = false;
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code,
+                            code : res.data.code,
                             needOk: true
                         });
 
@@ -322,21 +401,21 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.saveTask,
                             needTryAgain : true,
-                            status : 400
+                            code : res.data.code,
                         });
 
                     }
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    console.log(JSON.stringify(err.response.data));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'ERROR',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.getInitialData,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 

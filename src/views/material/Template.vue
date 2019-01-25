@@ -1,216 +1,170 @@
 <template>
     <div class="vue-template" >
-        <div class="vue-template" >
-            <div class="container-fluid" >
-                <div class="row" >
-                    <div class="col-sm-12" >
-                        <div class="my-tab" >
-                            <div class="my-tab-head" >
-                                <button v-bind:class="{active : selectedTab === i}" v-for="(tb,i) in tabButtons" v-on:click="tabBtnClickListener(i)" >{{tb}}</button>
+        <div class="container-fluid" style="margin-bottom: 10px" >
+            <div class="row" >
+                <div class="col-sm-12" >
+                    <div class="my-tab" >
+                        <div class="my-tab-head" >
+                            <button v-bind:class="{active : selectedTab === i}" v-for="(tb,i) in tabButtons" v-on:click="tabBtnClickListener(i)" >{{tb}}</button>
+                        </div>
+                        <div v-show="selectedTab===0" class="my-tab-body" >
+                            <div class="my-tab-100" >
+                                <table>
+                                    <tbody>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td><input type="text" v-model="template.name"  /></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <table class="my-tbl" >
+                                    <thead>
+                                    <tr>
+                                        <th>Check</th>
+                                        <th>Name</th>
+                                        <th>Duration</th>
+                                        <th>Cost</th>
+                                        <th>Sequence number</th>
+                                        <th>Task specialist</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr style="cursor: pointer"
+                                        v-for="(tk,i) in taskList"
+                                        v-bind:class="{activeTaskStyle : tk.checked }" >
+                                        <td><input type="checkbox" v-model="tk.checked" /></td>
+                                        <td>{{tk.name}}</td>
+                                        <td>{{tk.duration}}</td>
+                                        <td>{{tk.cost}}</td>
+                                        <td><input type="number" v-model="tk.sequenceNumber" /></td>
+                                        <td>{{tk.userEmail}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div v-show="selectedTab===0" class="my-tab-body" style="flex-direction: column" >
-                                <div class="my-tab-100" >
-                                    <table>
-                                        <tbody>
-                                            <tr>
-                                                <td>Name</td>
-                                                <td><input type="text" v-model="template.name" /></td>
-                                                <td><button class="my-btn" v-on:click="taskUp" ><i class="fas fa-arrow-up"></i></button></td>
-                                                <td><button class="my-btn" v-on:click="taskDown" ><i class="fas fa-arrow-down" ></i></button></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="my-tab-100" >
-                                    <table class="my-tbl" >
-                                        <thead>
-                                        <tr>
-                                            <th>Check</th>
-                                            <th>Name</th>
-                                            <th>Duration</th>
-                                            <th>Cost</th>
-                                            <th>Sequence number</th>
-                                            <th>Task specialist</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr style="cursor: pointer"
-                                                v-for="(t,i) in taskList"
-                                                v-bind:class="{activeTaskStyle : selectedTask.id === t.id }"
-                                                v-on:change="changeTask(t,i,$event)"  v-on:click="clickTask(t,i)" >
-
-                                                <td><input v-model="t.checked" type="checkbox" /></td>
-                                                <td>{{t.name}}</td>
-                                                <td>{{t.duration}}</td>
-                                                <td>{{t.cost}}</td>
-                                                <td>{{t.sequenceNumber}}</td>
-                                                <td>{{t.userEmail}}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                        </div>
+                        <div v-show="selectedTab===1" class="my-tab-body" >
+                            <div class="my-tab-100" >
+                                <table class="my-tbl" >
+                                    <thead>
+                                    <tr>
+                                        <th>Serial</th>
+                                        <th>Name</th>
+                                        <th>Task list</th>
+                                        <th>Edit</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(t,i) in templateList" >
+                                        <td>{{i+1}}</td>
+                                        <td>{{t.name}}</td>
+                                        <td>
+                                            <table class="my-tbl" >
+                                                <thead>
+                                                <tr>
+                                                    <th>Serial</th>
+                                                    <th>Name</th>
+                                                    <th>Cost</th>
+                                                    <th>Duration</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr v-for="(tl,i) in t.taskList" >
+                                                    <td>{{i+1}}</td>
+                                                    <td>{{tl.name}}</td>
+                                                    <td>{{tl.cost}}</td>
+                                                    <td>{{tl.duration}}</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                        <td><i class="fas fa-edit" v-on:click="setUpdateDate(t)" ></i></td>
+                                        <td><i class="fas fa-trash" ></i></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div v-show="selectedTab===1" class="my-tab-body" >
-                                <div class="my-tab-100" >
-                                    <table class="my-tbl" >
-                                        <thead>
-                                        <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
-                                            <th>Task list</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(t,i) in templateList" >
-                                                <td>{{i+1}}</td>
-                                                <td>{{t.name}}</td>
-                                                <td>
-                                                    <table class="my-tbl" >
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Serial</th>
-                                                                <th>Name</th>
-                                                                <th>Cost</th>
-                                                                <th>Duration</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr v-for="(tl,i) in t.taskList" >
-                                                                <td>{{i+1}}</td>
-                                                                <td>{{tl.name}}</td>
-                                                                <td>{{tl.cost}}</td>
-                                                                <td>{{tl.duration}}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </td>
-                                                <td><i class="fas fa-edit" v-on:click="openUpdateTemplateModel(t)" ></i></td>
-                                                <td><i class="fas fa-trash" ></i></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div v-show="selectedTab===0" class="my-tab-foot" >
-                                <button class="my-btn" v-on:click="saveTemplate" >Save</button>
-                            </div>
+                        </div>
+                        <div v-show="selectedTab===0" class="my-tab-foot" >
+                            <button v-if="template.id === -1" class="my-btn" v-on:click="verifyInput('save')" >save</button>
+                            <button v-else class="my-btn" v-on:click="verifyInput('update')" >Update</button>
+                            <button class="my-btn" v-on:click="reset" >Reset</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <transition name="slide-fade" >
-            <div class="my-model" v-show="isUpdateTemplateModelOpen" >
-                <div class="container-fluid" >
-                    <div class="row justify-content-center" >
-                        <div class="col-sm-12" >
-                            <div class="my-div" >
-                                <div class="my-div-head" >
-                                    <div class="my-div-head-left" >
-                                        <h3>Update template</h3>
-                                    </div>
-                                    <div class="my-div-head-right" >
-                                        <i class="fas fa-times-circle" v-on:click="closeUpdateTemplateModel" ></i>
-                                    </div>
-                                </div>
-                                <div class="my-div-body" >
-                                    <div class="my-div-body-100" >
-                                        <table>
-                                            <tbody>
-                                            <tr>
-                                                <td>Name</td>
-                                                <td><input type="text" v-model="template.name" /></td>
-                                                <td><button class="my-btn" v-on:click="taskUp" ><i class="fas fa-arrow-up"></i></button></td>
-                                                <td><button class="my-btn" v-on:click="taskDown" ><i class="fas fa-arrow-down" ></i></button></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="my-div-body" >
-                                    <div class="my-div-body-100" >
-                                        <table class="my-tbl" >
-                                            <thead>
-                                            <tr>
-                                                <th>Check</th>
-                                                <th>Name</th>
-                                                <th>Duration</th>
-                                                <th>Cost</th>
-                                                <th>Sequence number</th>
-                                                <th>Task specialist</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            <tr style="cursor: pointer" v-for="(t,i) in taskList" v-bind:class="{activeTaskStyle : selectedTask.id === t.id }" v-on:click="clickTask(t,i)">
-                                                <td>
-                                                    <input v-model="t.checked" type="checkbox" />
-                                                </td>
-                                                <td>{{t.name}}</td>
-                                                <td>{{t.duration}}</td>
-                                                <td>{{t.cost}}</td>
-                                                <td>{{t.sequenceNumber}}</td>
-                                                <td>{{t.userEmail}}</td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="my-div-foot" >
-                                    <div class="my-div-foot-left" >
-                                        <button class="my-btn" v-on:click="updateTemplate" >Update</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
         <notification ref="noti" ></notification>
     </div>
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
+    import CookieManager from "../../Helper/CookieManager"
+
     export default {
         name: "Template",
         components: {Notification},
         mounted(){
-            this.getTemplate();
-            this.template.modifiedBy = this.$store.state.userInfo.id;
+            this.getInitData();
         },
         data(){
             return{
-                isUpdateTemplateModelOpen : false,
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Create template','Template list'],
                 selectedTab : 0,
-                selectedTask:{
-                    pos : '',
-                    id : -1,
-                    name : '',
-                    duration : '',
-                    cost : '',
-                    sequenceNumber : '',
-                },
                 template :{
                     id : -1,
                     oId : -1,
                     name : '',
-                    modifiedBy : '',
-                    taskList : []
+                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
                 },
                 templateList : [],
-                taskList : []
+                taskList : [],
+                needToCloseNotification : true
             }
         },
         methods:{
-            closeUpdateTemplateModel(){
-                this.isUpdateTemplateModelOpen = false;
-                this.getTemplate();
+            verifyInput(which){
+                if (which==="save"){
+                    if (this.template.name===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : "Template name required",
+                            code : 200
+                        });
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.save,
+                            needConfirmation : true
+                        });
+                    }
+                }else if (which==="update"){
+                    if (this.template.name===""){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : "Template name required",
+                            code : 200
+                        });
+                    }else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Alert',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Would you like to submit ?',
+                            callBackMethod : this.update,
+                            needConfirmation : true
+                        });
+                    }
+                }
             },
-            getTemplate(){
+            getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -218,116 +172,116 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/template/get")
-                    .then(res=>{
+                this.$http.post(this.url+"/template/init-data",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
+                .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                    console.log(JSON.stringify(res.data));
 
-                        if (res.data.code===200){
+                    if (res.data.code===200){
 
-                            this.templateList = res.data.list;
+                        this.templateList = res.data.templateResponse.list;
+                        this.taskList = res.data.taskResponse.list;
 
-                        } else {
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.getTemplate,
-                                needTryAgain : true,
-                                status : res.data.code
-                            });
-
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
                         }
 
-                    })
-                    .catch(err=>{
-                        console.log(err);
+                    } else {
+
                         this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.getTemplate,
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : res.data.code
                         });
-                    })
-                    .finally(res=>{
-                        this.getTaskList();
-                    })
+
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err.response.data));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitData,
+                        needTryAgain : true,
+                        code : err.response.data.status
+                    });
+                })
 
             },
-            saveTemplate(){
+            save(){
 
+                console.log(JSON.stringify(this.template));
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/template/save",this.template)
-                    .then(res=>{
+                this.$http.post(this.url+"/template/save",{
+                    templateBn : this.template,
+                    taskBnList : this.taskList,
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
+                .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
-                        if (res.data.code===200){
+                    if (res.data.code===200){
 
-                            this.template.name = '';
-                            this.template.taskList = [];
-                            for (let i = 0; i < this.taskList.length; i++) {
-                                this.taskList[i].checked = false;
-                            }
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code
-                            });
-
-                        } else {
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.saveTemplate,
-                                needTryAgain : true,
-                                status : 400
-                            });
-
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
+                        this.needToCloseNotification = false;
+                        this.reset();
+                        this.getInitData();
                         this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.saveTemplate,
-                            needTryAgain : true,
-                            status : err.response.data.status
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            code : res.data.code
                         });
-                    })
+
+                    } else {
+
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.save,
+                            needTryAgain : true,
+                            code : res.data.msg,
+                        });
+
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'ERROR',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.save,
+                        needTryAgain : true,
+                        code : err.response.data.status
+                    });
+                })
 
             },
             tabBtnClickListener(i){
                 this.selectedTab = i;
-
-                this.template.name = '';
-                this.template.taskList = [];
-                for (let i = 0; i < this.taskList.length; i++) {
-                    this.taskList[i].checked = false;
-                }
-
-                if (i===1){
-                    this.getTemplate();
-                }
             },
-            getTaskList(){
+            update(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -336,155 +290,59 @@
                 });
 
                 let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/task/get")
-                    .then(res=>{
+                this.$http.post(url+"/template/update",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    taskBnList : this.taskList,
+                    menuBn : {
+                        link : this.$route.path
+                    },
+                    templateBn : this.template,
+                })
+                .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                    if (res.data.code===200){
 
-                        if (res.data.code===200){
+                        this.needToCloseNotification = false;
+                        this.reset();
+                        this.getInitData();
 
-                            this.taskList = res.data.list;
-                            this.$refs.noti.closeNotification();
-
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.getTaskList,
-                                needTryAgain : true,
-                                status : 400
-                            });
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
                         this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.getTaskList,
-                            needTryAgain : true,
-                            status : err.response.data.status
+                            title : 'Success',
+                            bodyIcon : 'fas fa-check-circle',
+                            bodyMsg : res.data.msg,
+                            code : res.data.code
                         });
-                    })
 
-            },
-            changeTask(t,pos,$event){
+                    } else {
 
-                if ($event.target.checked){
-                    this.template.taskList.push(t)
-                }else {
-                    this.template.taskList.splice(pos,1);
-                }
-
-                // console.log(JSON.stringify(this.template.taskList));
-            },
-            clickTask(t,pos){
-                this.selectedTask.pos = pos;
-                this.selectedTask.id = t.id;
-                this.selectedTask.cost = t.cost;
-                this.selectedTask.duration = t.duration;
-                this.selectedTask.sequenceNumber = t.sequenceNumber;
-            },
-            taskUp(){
-
-                if (this.selectedTask.pos < 1){
-                    this.selectedTask.pos = 1;
-                }
-
-                let x = this.taskList[this.selectedTask.pos].sequenceNumber;
-                let y = this.taskList[this.selectedTask.pos-1].sequenceNumber;
-
-                this.taskList[this.selectedTask.pos].sequenceNumber = y;
-                this.taskList[this.selectedTask.pos-1].sequenceNumber = x;
-
-                this.selectedTask.pos = this.selectedTask.pos -1;
-
-                this.taskList.sort(function(a, b){
-                    return a.sequenceNumber - b.sequenceNumber;
-                });
-
-            },
-            taskDown(){
-
-                if (this.selectedTask.pos === this.taskList.length-1){
-                    // this.selectedTask.pos = this.taskList.length-2;
-                    this.selectedTask.pos = this.selectedTask.pos-1;
-                }
-
-                // console.log(this.selectedTask.pos );
-                // console.log(this.taskList.length);
-
-                let x = this.taskList[this.selectedTask.pos].sequenceNumber;
-                let y = this.taskList[this.selectedTask.pos+1].sequenceNumber;
-
-                this.taskList[this.selectedTask.pos].sequenceNumber = y;
-                this.taskList[this.selectedTask.pos+1].sequenceNumber = x;
-
-                this.selectedTask.pos = this.selectedTask.pos+1;
-
-                this.taskList.sort(function(a, b){
-                    return a.sequenceNumber - b.sequenceNumber;
-                });
-
-            },
-            updateTemplate(){
-
-                this.$refs.noti.setNotificationProperty({
-                    title : 'Loading',
-                    bodyIcon : 'fas fa-sync fa-spin',
-                    bodyMsg : 'Please wait ... !'
-                });
-
-                this.template.taskList = this.taskList;
-
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/template/update",this.template)
-                    .then(res=>{
-
-                        // console.log(JSON.stringify(res.data));
-
-                        if (res.data.code===200){
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Success',
-                                bodyIcon : 'fas fa-check-circle',
-                                bodyMsg : res.data.msg,
-                                status : res.data.code
-                            });
-
-                        } else {
-
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.updateTemplate,
-                                needTryAgain : true,
-                                status : 400
-                            });
-
-                        }
-
-                    })
-                    .catch(err=>{
-                        console.log(err);
                         this.$refs.noti.setNotificationProperty({
-                            title : 'ERROR',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
-                            callBackMethod : this.updateTemplate,
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.update,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : res.data.code
                         });
-                    })
+
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(err);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.update,
+                        needTryAgain : true,
+                        code : err.response.data.status
+                    });
+                })
 
             },
-            openUpdateTemplateModel(t){
+            setUpdateDate(t){
 
-                this.isUpdateTemplateModelOpen = true;
+                this.selectedTab = 0;
 
                 for (let i = 0; i < this.taskList.length; i++) {
                     this.taskList[i].checked = false;
@@ -503,11 +361,18 @@
                     }
                 }
 
-                this.taskList.sort(function(a, b){
-                    return a.sequenceNumber - b.sequenceNumber;
-                });
+            },
+            reset(){
 
-            }
+                this.template.name = "";
+                this.template.oId = -1;
+                this.template.id = -1;
+                for (let i = 0; i < this.taskList.length; i++) {
+                    this.taskList[i].checked = false;
+                    this.taskList[i].sequenceNumber = 0;
+                }
+
+            },
         }
     }
 </script>

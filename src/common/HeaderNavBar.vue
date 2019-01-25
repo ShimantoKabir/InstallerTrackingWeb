@@ -164,7 +164,7 @@
                             let notificationsList = JSON.parse(tick.body).list;
                             let obj = JSON.parse(tick.body).object;
                             if (notificationsList!==null){
-                                if (this.$store.state.userInfo.id === obj.receiver){
+                                if (CookieManager.getParsedData("userInfo").id === obj.receiver){
                                     this.serverNotification = notificationsList;
                                     this.countUnseenNotification(this.serverNotification);
                                 }
@@ -192,9 +192,10 @@
                         if (res.data.code===200){
                             this.isNotificationOpen = false;
                             let req = {
-                                userBn : {
-                                    id : CookieManager.getParsedData("userInfo").id
-                                }
+                                notificationBn : {
+                                    receiver : n.receiver
+                                },
+                                userBn : CookieManager.getParsedData("userInfo")
                             };
                             this.stompClient.send("/ws-request/get-notification-by-receiver",JSON.stringify(req),{});
                             this.$router.push({path: n.link});

@@ -130,17 +130,20 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
+    import CookieManager from "../../Helper/CookieManager";
+
     export default {
         name: "WorkOrder",
         components: {Notification},
         mounted(){
-            this.workOrder.modifiedBy = this.$store.state.userInfo.id;
             this.getInitData();
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Create work order','Work order list'],
                 selectedTab : 0,
                 workOrder :{
@@ -152,7 +155,7 @@
                     requester : '',
                     siteId : '',
                     sitePic : '',
-                    modifiedBy : '',
+                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
                     statusOid : 101,
                     sitePiCt : ''
                 },
@@ -166,53 +169,56 @@
         methods:{
             getInitData(){
 
-                let url = this.$store.state.baseUrl;
-
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-spin fa-sync',
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.get(url+"/work-order/get-init-data")
-                    .then(res=>{
+                this.$http.post(this.url+"/work-order/get-init-data",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                })
+                .then(res=>{
 
-                        console.log(JSON.stringify(res.data));
+                    console.log(JSON.stringify(res.data));
 
-                        if (res.data.code===200){
+                    if (res.data.code===200){
 
-                            this.siteList = res.data.siteList;
-                            this.userList = res.data.userList;
-                            this.statusList = res.data.statusList;
-                            this.workOrderList = res.data.workOrderList;
+                        this.siteList = res.data.siteList;
+                        this.userList = res.data.userList;
+                        this.statusList = res.data.statusList;
+                        this.workOrderList = res.data.workOrderList;
 
-                            if (this.needToCloseNotification){
-                                this.$refs.noti.closeNotification();
-                            }
-
-                        } else {
-                            this.$refs.noti.setNotificationProperty({
-                                title : 'Error',
-                                bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : res.data.msg,
-                                callBackMethod : this.getInitData,
-                                needTryAgain : true,
-                                status : res.data.code
-                            });
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
                         }
 
-                    })
-                    .catch(err=>{
-                        console.log(JSON.stringify(err));
+                    } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : err.response.data.message,
+                            bodyMsg : res.data.msg,
                             callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            status : res.data.code
                         });
-                    })
+                    }
+
+                })
+                .catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                })
 
             },
             tabBtnClickListener(i){

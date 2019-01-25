@@ -249,7 +249,14 @@
                             bodyMsg : res.data.msg,
                         });
 
-                        this.stompClient.send("/ws-request/get-notification-by-receiver",String(this.selectedUserInfo.id),{});
+                        let req = {
+                            notificationBn : {
+                                receiver : receiver
+                            },
+                            userBn : CookieManager.getParsedData("userInfo")
+                        };
+
+                        this.stompClient.send("/ws-request/get-notification-by-receiver",JSON.stringify(req),{});
 
                     }
 

@@ -74,10 +74,6 @@
                                                 <td><input v-model="c.cost" type="number" /></td>
                                                 <td><i class="fas fa-times-circle" v-on:click="removeCostBreakDown(i)" ></i></td>
                                             </tr>
-                                            <tr>
-                                                <td><button class="my-btn" v-on:click="openCbdModel" ><i class="fas fa-plus" ></i></button></td>
-                                                <td>Add cost break down</td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
