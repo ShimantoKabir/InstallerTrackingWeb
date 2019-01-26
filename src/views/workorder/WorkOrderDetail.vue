@@ -54,7 +54,7 @@
                             </div>
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
-                                    <table class="my-tbl" >
+                                    <table class="my-tbl" style="font-size: 13px" >
                                         <thead>
                                         <tr>
                                             <th>SL</th>
@@ -213,15 +213,16 @@
 <script>
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
+    import CookieManager from "../../Helper/CookieManager";
     export default {
         name: "WorkOrderDetail",
         components: {Notification},
         mounted(){
-            this.workOrderDetail.modifiedBy = this.$store.state.userInfo.id;
             this.getInitData();
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 isUpdateWodModelOpen : false,
                 tabButtons : ['Create work order details','Work order detail list'],
                 selectedTab : 0,
@@ -231,7 +232,7 @@
                     woName : '',
                     templateOid : -1,
                     templateName : '',
-                    modifiedBy : '',
+                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
                 },
                 selectedTemplatePos : -1,
                 workOrderList : [],
@@ -276,18 +277,16 @@
             },
             getInitData(){
 
-                let url = this.$store.state.baseUrl;
-
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-spin fa-sync',
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.get(url+"/work-order-detail/get-init-data")
+                this.$http.get(this.url+"/work-order-detail/get-init-data")
                     .then(res=>{
 
-                        console.log(JSON.stringify(res.data));
+                        // console.log(JSON.stringify(res.data));
 
                         if (res.data.code===200){
 
@@ -306,7 +305,7 @@
                                 bodyMsg : res.data.msg,
                                 callBackMethod : this.getInitData,
                                 needTryAgain : true,
-                                status : res.data.code
+                                code : res.data.code
                             });
                         }
 
@@ -319,7 +318,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     })
 
@@ -329,9 +328,7 @@
             },
             saveWorkOrderDetail(){
 
-                console.log(JSON.stringify(this.taskList));
-
-                let url = this.$store.state.baseUrl;
+                // console.log(JSON.stringify(this.taskList));
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -339,7 +336,7 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.post(url+"/work-order-detail/save",{
+                this.$http.post(this.url+"/work-order-detail/save",{
                     workOrderDetailBn : {
                         id : this.workOrderDetail.id,
                         woId : this.workOrderDetail.woId,
@@ -347,11 +344,14 @@
                         modifiedBy : this.workOrderDetail.modifiedBy
                     },
                     taskBnList : this.taskList,
-                    userBn : this.$store.state.userInfo
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
@@ -361,7 +361,7 @@
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code
+                            code : res.data.code
                         });
 
                     } else {
@@ -371,7 +371,7 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.saveWorkOrderDetail,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     }
 
@@ -384,16 +384,14 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.saveWorkOrderDetail,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 
             },
             updateWorkOrderDetail(){
 
-                console.log(JSON.stringify(this.updateTaskList));
-
-                let url = this.$store.state.baseUrl;
+                // console.log(JSON.stringify(this.updateTaskList));
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -401,12 +399,15 @@
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.post(url+"/work-order-detail/update",{
+                this.$http.post(this.url+"/work-order-detail/update",{
                     workOrderDetailBn : {
                         modifiedBy : this.workOrderDetail.modifiedBy
                     },
                     taskBnList : this.updateTaskList,
-                    userBn : this.$store.state.userInfo
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                     .then(res=>{
 
@@ -422,7 +423,7 @@
                                 title : 'Success',
                                 bodyIcon : 'fas fa-check-circle',
                                 bodyMsg : res.data.msg,
-                                status : res.data.code,
+                                code : res.data.code,
                                 needOk : true
                             });
 
@@ -433,7 +434,7 @@
                                 bodyMsg : res.data.msg,
                                 callBackMethod : this.updateWorkOrderDetail,
                                 needTryAgain : true,
-                                status : res.data.code
+                                code : res.data.code
                             });
                         }
 
@@ -446,7 +447,7 @@
                             bodyMsg : err.response.data.message,
                             callBackMethod : this.updateWorkOrderDetail,
                             needTryAgain : true,
-                            status : err.response.data.status
+                            code : err.response.data.status
                         });
                     })
 
@@ -476,6 +477,7 @@
                 }
             },
             openUpdateWodModel(wod){
+
                 this.isUpdateWodModelOpen = true;
                 this.workOrderDetail.woId = wod.woId;
                 this.workOrderDetail.templateName = wod.templateName;
@@ -493,18 +495,20 @@
             },
             deleteWorkOrderDetail(wo){
 
-                let url = this.$store.state.baseUrl;
-
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-spin fa-sync',
                     bodyMsg : 'Please wait ... !',
                 });
 
-                this.$http.post(url+"/work-order-detail/delete",{
+                this.$http.post(this.url+"/work-order-detail/delete",{
                     workOrderDetailBn : {
                         woId : wo.woId,
                         templateOid : wo.templateOid
+                    },
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
                     }
                 })
                 .then(res=>{
@@ -521,7 +525,7 @@
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code,
+                            code : res.data.code,
                             needOk: true
                         });
 
@@ -532,7 +536,7 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.deleteWorkOrderDetail,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     }
 
@@ -545,7 +549,7 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.deleteWorkOrderDetail,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 })
 

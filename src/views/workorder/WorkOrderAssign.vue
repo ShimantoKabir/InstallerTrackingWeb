@@ -33,9 +33,9 @@
                                         <tr>
                                             <td>Assign to</td>
                                             <td>
-                                                <select v-model="woAssign.assignTo" >
+                                                <select v-model="woAssign.assignPos" v-on:change="userChange()" >
                                                     <option v-bind:value="-1" >-- select --</option>
-                                                    <option v-bind:value="u.id" v-for="u in userList" >{{u.userName}}</option>
+                                                    <option v-bind:value="i" v-for="(u,i) in userList" >{{u.userEmail}}</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -69,10 +69,12 @@
                                 <div class="my-tab-50" >
                                     <table>
                                         <tbody>
-                                            <tr v-for="(c,i) in woAssign.woAssignDetailBnList" >
-                                                <td>{{c.breakDown}}</td>
-                                                <td><input v-model="c.cost" type="number" /></td>
-                                                <td><i class="fas fa-times-circle" v-on:click="removeCostBreakDown(i)" ></i></td>
+                                            <tr>
+                                                <td style="color: green" colspan="2" >Cost break down</td>
+                                            </tr>
+                                            <tr v-for="(c,i) in woAssignDetailBnList" >
+                                                <td>{{c.name}}</td>
+                                                <td><input type="number" v-model="c.cost" /></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -80,7 +82,7 @@
                             </div>
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
-                                    <table class="my-tbl" >
+                                    <table class="my-tbl" style="font-size: 12px" >
                                         <thead>
                                         <tr>
                                             <th>Sr</th>
@@ -117,8 +119,8 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            <tr v-for="wabd in  wab.woAssignDetailList" >
-                                                                <td>{{wabd.breakDown}}</td>
+                                                            <tr v-for="wabd in  wab.woAssignDetailBnList" >
+                                                                <td>{{wabd.name}}</td>
                                                                 <td>{{wabd.cost}}</td>
                                                             </tr>
                                                         </tbody>
@@ -142,49 +144,6 @@
             </div>
         </div>
         <notification ref="noti" ></notification>
-        <transition name="slide-fade" >
-            <div class="my-model" v-show="isCbdModelOpen" >
-                <div class="container-fluid" >
-                    <div class="row justify-content-center" >
-                        <div class="col-sm-3" >
-                            <div class="my-div" >
-                                <div class="my-div-head" >
-                                    <div class="my-div-head-left" >
-                                        <h3>Cost break down</h3>
-                                    </div>
-                                    <div class="my-div-head-right" >
-                                        <i class="fas fa-times-circle" v-on:click="closeCbdModel" ></i>
-                                    </div>
-                                </div>
-                                <div class="my-div-body" >
-                                    <table>
-                                        <tbody>
-                                        <tr>
-                                            <td>Break down</td>
-                                            <td>
-                                                <input type="text" v-model="cbd.breakDown" />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Cost</td>
-                                            <td>
-                                                <input type="text" v-model="cbd.cost" />
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="my-div-foot" >
-                                    <div class="my-div-foot-left" >
-                                        <button class="my-btn" v-on:click="addCostBreakDown" >Add</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
     </div>
 </template>
 
@@ -192,16 +151,17 @@
 
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
+    import CookieManager from "../../Helper/CookieManager";
 
     export default {
         name: "WorkOrderAssign",
         components: {Notification},
         mounted(){
             this.getInitData();
-            this.woAssign.modifiedBy = this.$store.state.userInfo.id;
         },
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 tabButtons : ['Assign work order','Assign list'],
                 selectedTab : 0,
                 needToCloseNotification : true,
@@ -210,28 +170,31 @@
                     woId : '',
                     deptOid : -1,
                     assignTo : '',
+                    assignPos : -1,
+                    assignUserMail : '',
                     assignDate : '',
                     assignTime : '',
                     scope : '',
                     remark : '',
-                    modifiedBy : '',
-                    woAssignDetailBnList : [],
+                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
                     statusName : '',
                     assignUserName : '',
                     deptName : '',
                 },
-                cbd : {
-                    breakDown : '',
-                    cost : 0
-                },
                 workOrderList : [],
                 departmentBnList : [],
                 woAssignBnList : [],
+                costBreakDownList : [],
+                woAssignDetailBnList : [],
                 userList : [],
                 isCbdModelOpen : false
             }
         },
         methods:{
+            userChange(){
+                this.woAssign.assignTo = this.userList[this.woAssign.assignPos].id;
+                this.woAssign.assignUserMail = this.userList[this.woAssign.assignPos].userEmail;
+            },
             getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -240,17 +203,18 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.get(url+"/wo-assign/init")
+                this.$http.get(this.url+"/wo-assign/init")
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
                         this.departmentBnList = res.data.departmentBnList;
                         this.workOrderList = res.data.workOrderList;
                         this.woAssignBnList = res.data.woAssignBnList;
+                        this.costBreakDownList = res.data.costBreakDownList;
+                        this.woAssignDetailBnList = res.data.costBreakDownList;
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
@@ -296,13 +260,19 @@
 
                 } else {
 
-                    let url = this.$store.state.baseUrl;
-
-                    this.$http.post(url+"/user/get-by-department",{
-                        oId : oId
+                    this.$http.post(this.url+"/user/get-by-department",{
+                        departmentBn : {
+                            oId : oId
+                        },
+                        userBn : CookieManager.getParsedData("userInfo"),
+                        menuBn : {
+                            link : this.$route.path
+                        }
                     })
                     .then(response=>{
+
                         console.log(JSON.stringify(response.data));
+
                         if (response.data.code===200){
                             this.userList = response.data.list;
                             this.$refs.noti.closeNotification();
@@ -356,9 +326,13 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/wo-assign/save",{
-                    woAssignBn : this.woAssign
+                this.$http.post(this.url+"/wo-assign/save",{
+                    woAssignBn : this.woAssign,
+                    woAssignDetailBnList : this.woAssignDetailBnList,
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -366,6 +340,7 @@
 
                     if (res.data.code===200){
 
+                        this.reset();
                         this.needToCloseNotification = false;
                         this.getInitData();
                         this.$refs.noti.setNotificationProperty({
@@ -407,11 +382,12 @@
                 this.woAssign.woId = w.woId;
                 this.woAssign.deptOid = w.deptOid;
                 this.woAssign.assignTo = w.assignTo;
+                this.woAssign.assignPos = -1;
                 this.woAssign.assignDate = DateFormatManager.formate(w.assignDate);
                 this.woAssign.assignTime = w.assignTime;
                 this.woAssign.scope = w.scope;
                 this.woAssign.remark = w.remark;
-                this.woAssign.woAssignDetailBnList = w.woAssignDetailList;
+                this.woAssignDetailBnList = w.woAssignDetailBnList;
                 this.woAssign.assignUserName = w.assignUserName;
 
             },
@@ -422,13 +398,16 @@
                 this.woAssign.woId = "";
                 this.woAssign.deptOid = "";
                 this.woAssign.assignTo = "";
+                this.woAssign.assignPos = "";
+                this.woAssign.assignUserMail = "";
                 this.woAssign.assignDate = "";
                 this.woAssign.assignTime = "";
                 this.woAssign.scope = "";
                 this.woAssign.remark = "";
                 this.woAssign.modifiedBy = "";
-                this.woAssign.woAssignDetailBnList = [];
                 this.woAssign.assignUserName = "";
+
+                this.woAssignDetailBnList = this.costBreakDownList;
 
             },
             update(){
@@ -439,9 +418,13 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/wo-assign/update",{
-                    woAssignBn : this.woAssign
+                this.$http.post(this.url+"/wo-assign/update",{
+                    woAssignBn : this.woAssign,
+                    woAssignDetailBnList : this.woAssignDetailBnList,
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
                 })
                 .then(res=>{
 
@@ -491,11 +474,14 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/wo-assign/delete",{
+                this.$http.post(this.url+"/wo-assign/delete",{
                     woAssignBn : {
                         id : w.id,
                         oId : w.oId
+                    },
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
                     }
                 })
                 .then(res=>{
@@ -510,7 +496,7 @@
                             title : 'Success',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
-                            status : res.data.code
+                            code : res.data.code
                         });
 
                     } else {
@@ -520,7 +506,7 @@
                             bodyMsg : res.data.msg,
                             callBackMethod : this.deleteWoAssign,
                             needTryAgain : true,
-                            status : res.data.code
+                            code : res.data.code
                         });
                     }
 
@@ -533,7 +519,7 @@
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.save,
                         needTryAgain : true,
-                        status : err.response.data.status
+                        code : err.response.data.status
                     });
                 });
 

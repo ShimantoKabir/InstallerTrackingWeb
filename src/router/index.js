@@ -23,6 +23,7 @@ const Site = () => import('@/views/material/Site');
 const WorkOrder = () => import('@/views/workorder/WorkOrder');
 const WorkOrderDetail = () => import('@/views/workorder/WorkOrderDetail');
 const WorkOrderAssign = () => import('@/views/workorder/WorkOrderAssign');
+const CostBreakDown = () => import('@/views/accounts/CostBreakDown');
 
 
 export default new Router({
@@ -175,6 +176,14 @@ export default new Router({
                     path: '/track-by-work-order',
                     name: 'TrackByWorkOrder',
                     component: TrackByWorkOrder,
+                    meta:{
+                        requiresAuth: true
+                    }
+                },
+                {
+                    path: '/cost-break-down',
+                    name: 'CostBreakDown',
+                    component: CostBreakDown,
                     meta:{
                         requiresAuth: true
                     }
