@@ -176,7 +176,7 @@
                     assignTime : '',
                     scope : '',
                     remark : '',
-                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
+                    modifiedBy : CookieManager.getParsedData("userInfo").id,
                     statusName : '',
                     assignUserName : '',
                     deptName : '',
@@ -303,21 +303,6 @@
                 }
 
             },
-            addCostBreakDown(){
-                this.woAssign.woAssignDetailBnList.push(JSON.parse(JSON.stringify(this.cbd)));
-                this.cbd.breakDown = "";
-                this.cbd.cost = "";
-                this.isCbdModelOpen = false;
-            },
-            closeCbdModel(){
-                this.isCbdModelOpen = false;
-            },
-            openCbdModel(){
-                this.isCbdModelOpen = true;
-            },
-            removeCostBreakDown(i){
-                this.woAssign.woAssignDetailBnList.splice(i,1);
-            },
             save(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -396,15 +381,14 @@
                 this.selectedTab = 0;
                 this.woAssign.id = -1;
                 this.woAssign.woId = "";
-                this.woAssign.deptOid = "";
+                this.woAssign.deptOid = -1;
                 this.woAssign.assignTo = "";
-                this.woAssign.assignPos = "";
+                this.woAssign.assignPos = -1;
                 this.woAssign.assignUserMail = "";
                 this.woAssign.assignDate = "";
                 this.woAssign.assignTime = "";
                 this.woAssign.scope = "";
                 this.woAssign.remark = "";
-                this.woAssign.modifiedBy = "";
                 this.woAssign.assignUserName = "";
 
                 this.woAssignDetailBnList = this.costBreakDownList;
@@ -456,7 +440,7 @@
                 .catch(err=>{
                     console.log(JSON.stringify(err));
                     this.$refs.noti.setNotificationProperty({
-                        title : 'ERROR',
+                        title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
                         callBackMethod : this.update,

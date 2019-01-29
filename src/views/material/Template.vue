@@ -119,7 +119,7 @@
                     id : -1,
                     oId : -1,
                     name : '',
-                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
+                    modifiedBy : CookieManager.getParsedData("userInfo").id,
                 },
                 templateList : [],
                 taskList : [],

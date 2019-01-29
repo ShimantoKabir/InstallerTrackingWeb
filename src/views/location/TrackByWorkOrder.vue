@@ -142,6 +142,7 @@
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";
     import ColorManager from "../../Helper/ColorManager";
+    import CookieManager from "../../Helper/CookieManager";
 
     export default {
         name: "TrackByWorkOrder",
@@ -264,7 +265,7 @@
                     workOrderBn : {
                         id : this.woId
                     },
-                    userBn : this.$store.state.userInfo,
+                    userBn : CookieManager.getParsedData("userInfo"),
                     menuBn : {
                         link : "/track-by-work-order"
                     }

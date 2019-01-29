@@ -81,7 +81,7 @@
                             </div>
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
-                                    <table class="my-tbl" >
+                                    <table class="my-tbl" style="font-size: 13px" >
                                         <thead>
                                         <tr>
                                             <th>Serial</th>

@@ -51,6 +51,7 @@
         components: {Notification},
         data(){
             return{
+                url : this.$store.state.baseUrl,
                 userInfoModel :{
                     userName : '',
                     userEmail : '',
@@ -69,17 +70,19 @@
             },
             saveUserProfile(){
 
-                this.$store.state.userInfo.userName = this.userInfoModel.userName;
-
                 this.$refs.noti.setNotificationProperty({
                     title : 'Processing',
                     bodyIcon : 'fas fa-sync fa-spin',
                     bodyMsg : 'Please wait !',
                 });
 
-                let url = this.$store.state.baseUrl;
-                this.$http.post(url+"/user/save/profile",{
-                    userBn : CookieManager.getParsedData("userInfo"),
+                this.$http.post(this.url+"/user/save/profile",{
+                    userBn : {
+                        id : CookieManager.getParsedData("userInfo").id,
+                        userEmail : CookieManager.getParsedData("userInfo").userEmail,
+                        userName : this.userInfoModel.userName,
+                        sessionId : CookieManager.getParsedData("userInfo").sessionId
+                    },
                     menuBn :{
                         link : this.$route.path
                     }

@@ -33,6 +33,7 @@
                                     <tbody>
                                     <tr>
                                         <td><button class="my-btn" v-on:click="verifyForgotPasswordToken" >Save new password</button></td>
+                                        <td><button class="my-btn" v-on:click="backToLogin" >Back</button></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -81,7 +82,7 @@
             sendForgotPasswordLink(){
 
                 this.$refs.noti.setNotificationProperty({
-                    title : 'Processing',
+                    title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',
                     bodyMsg : 'Please wait ... !',
                 });

@@ -65,7 +65,6 @@
         name: "CostBreakDown",
         components: {Notification},
         mounted(){
-            this.costBreakDownBn.modifiedBy = this.$store.state.userInfo.id;
             this.getAllCostBreakDown();
         },
         data(){
@@ -246,7 +245,7 @@
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
-                            callBackMethod : this.saveCostBreakDown,
+                            callBackMethod : this.update,
                             needTryAgain : true,
                             code : res.data.code
                         });
@@ -259,7 +258,7 @@
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
-                        callBackMethod : this.getInitialData,
+                        callBackMethod : this.update,
                         needTryAgain : true,
                         code : err.response.data.status
                     });

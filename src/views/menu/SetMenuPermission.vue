@@ -93,6 +93,8 @@
         components: {Notification},
         mounted(){
             this.getInitialData();
+            this.getMenuByDepartment(CookieManager.getParsedData("userInfo").deptId,false);
+            this.selectedDepartmentId = CookieManager.getParsedData("userInfo").deptId;
         },
         data(){
             return{
@@ -133,8 +135,6 @@
                     if (res.data.code===200){
 
                         this.departments = res.data.list;
-                        this.selectedDepartmentId = res.data.list[0].oId;
-                        this.getMenuByDepartment(this.selectedDepartmentId,false);
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
                         }

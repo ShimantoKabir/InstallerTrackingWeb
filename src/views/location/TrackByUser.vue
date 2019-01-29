@@ -157,6 +157,7 @@
     import Notification from "../notificaiton/Notification";
     import SockJS from "sockjs-client";
     import Stomp from "webstomp-client";
+    import CookieManager from "../../Helper/CookieManager";
 
     export default {
         name: "TrackByUser",
@@ -196,7 +197,7 @@
                     longitude : ''
                 },
                 needToCloseNotification : true,
-                userLocationList : '',
+                userLocationList : [],
             }
         },
         methods:{
@@ -258,25 +259,25 @@
                             }
                         } else {
                             this.$refs.noti.setNotificationProperty({
-                                title : 'Initial data processing error',
+                                title : 'Error',
                                 bodyIcon : 'fas fa-exclamation-circle',
-                                bodyMsg : 'Can not get department list !',
+                                bodyMsg : res.data.msg,
                                 callBackMethod : this.getInitialData,
                                 needTryAgain : true,
-                                code : 400
+                                code : res.data.msg
                             });
                         }
 
                     })
                     .catch(err=>{
-                        console.log(err);
+                        console.log(JSON.stringify(err.response.data));
                         this.$refs.noti.setNotificationProperty({
-                            title : 'Initial data processing error',
+                            title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Can not get department list !',
-                            callBackMethod : this.getInitialData,
+                            bodyMsg : err.response.data.message,
+                            callBackMethod : this.getInitData,
                             needTryAgain : true,
-                            code : 400
+                            code : err.response.data.status
                         });
                     })
 
@@ -292,6 +293,10 @@
                 this.$http.post(this.url+"/user/get-by-department",{
                     departmentBn : {
                         oId : this.selectedDepartmentId
+                    },
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
                     }
                 })
                 .then(res=>{
@@ -322,7 +327,6 @@
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
-                        width : '60%',
                         callBackMethod : this.departmentChange,
                         needTryAgain : true,
                         code : err.response.data.status
@@ -389,6 +393,8 @@
                         this.stompClient.subscribe("/ws-response/location-by-user", tick => {
                             this.userLocationList = JSON.parse(tick.body).list;
                             // console.log(JSON.stringify(this.userLocationList))
+                            this.center.lat = this.userLocationList[0].position.lat;
+                            this.center.lng = this.userLocationList[0].position.lng;
                         });
                     },
                     error => {

@@ -132,7 +132,6 @@
         name: "Site",
         components: {Notification},
         mounted(){
-            this.site.modifiedBy = this.$store.state.userInfo.id;
             this.getSiteList();
         },
         data(){
@@ -152,7 +151,7 @@
                     address : '',
                     lat : '',
                     lon : '',
-                    modifiedBy : ''
+                    modifiedBy : CookieManager.getParsedData("userInfo").id
                 },
                 currentPlace: null,
                 siteList : [],

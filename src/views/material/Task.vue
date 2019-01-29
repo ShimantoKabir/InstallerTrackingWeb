@@ -150,7 +150,7 @@
                     duration : '',
                     cost : '',
                     taskSpecialist : -1,
-                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id)
+                    modifiedBy : CookieManager.getParsedData("userInfo").id
                 },
                 taskList : [],
                 userList : [],
@@ -290,6 +290,8 @@
             },
             save(){
 
+                console.log(JSON.stringify(this.task));
+
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
                     bodyIcon : 'fas fa-sync fa-spin',
@@ -311,6 +313,8 @@
 
                         this.getInitData();
                         this.reset();
+
+                        console.log()
 
                         this.needToCloseNotification = false;
                         this.$refs.noti.setNotificationProperty({
@@ -350,11 +354,6 @@
             },
             tabBtnClickListener(i){
                 this.selectedTab = i;
-                this.task.id = '';
-                this.task.name = '';
-                this.task.duration = '';
-                this.task.cost = '';
-                this.task.taskSpecialist = -1;
             },
             closeUpdateTaskModel(){
                 this.isUpdateTaskModelOpen = false;
@@ -376,13 +375,15 @@
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
                         this.getInitData();
                         this.isUpdateTaskModelOpen = false;
                         this.reset();
+
+                        console.log(JSON.stringify(this.task));
 
                         this.needToCloseNotification = false;
                         this.$refs.noti.setNotificationProperty({
@@ -434,7 +435,7 @@
                 this.task.name = "";
                 this.task.duration = "";
                 this.task.cost = "";
-                this.task.taskSpecialist = [];
+                this.task.taskSpecialist = -1;
             }
         }
     }

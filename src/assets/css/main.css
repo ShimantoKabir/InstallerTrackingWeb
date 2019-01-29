@@ -124,6 +124,22 @@ input[type=email],input[type=password],input[type=text],input[type=number],input
     background-color: transparent;
     color: #4CAF50;
 }
+.my-pg-btn{
+    font-size: 10px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 2px 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-family: Armata;
+    cursor: pointer;
+    border-radius: 3px;
+    border: 1px solid #4CAF50;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.2),0 3px 4px 0 rgba(0,0,0,.14),0 3px 3px -2px rgba(0,0,0,.12);
+    -webkit-transition-duration: 0.4s;
+    transition-duration: 0.4s;
+}
 /*animation*/
 .slide-fade-enter-active {
     -webkit-transition: all .3s ease;
