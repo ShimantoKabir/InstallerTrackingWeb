@@ -9,7 +9,8 @@ export const store = new Vuex.Store({
         menu : '',
         route : [],
         userInfo : '',
-        baseUrl : 'http://52.37.3.109:3307',
-        userPresence : ''
+        baseUrl : 'http://192.168.0.3:3307',
+        userPresence : '',
+        webSocketBaseUrl : "http://192.168.0.3:3307/ws"
     }
 });

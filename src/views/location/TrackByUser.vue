@@ -384,7 +384,7 @@
             },
             connect() {
 
-                this.socket = new SockJS("http://192.168.0.3:3307/ws");
+                this.socket = new SockJS(this.$store.state.webSocketBaseUrl);
                 this.stompClient = Stomp.over(this.socket);
                 this.stompClient.debug = () => {};
                 this.stompClient.connect({},

@@ -220,9 +220,11 @@
 </template>
 
 <script>
+
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
     import CookieManager from "../../Helper/CookieManager";
+
     export default {
         name: "WorkOrderDetail",
         components: {Notification},
