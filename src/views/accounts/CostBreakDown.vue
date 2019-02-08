@@ -23,14 +23,12 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" >
-                                        <thead>
-                                        <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                row-par-page="2"
+                                                :header-name-list="headerNameList"
+                                                :set-table-data="setTableData" >
+                                        </table-head>
                                         <tbody>
                                         <tr v-for="(cl,i) in costBreakDownList" >
                                             <td>{{i+1}}</td>
@@ -60,10 +58,11 @@
 
     import Notification from "../notificaiton/Notification";
     import CookieManager from "../../Helper/CookieManager";
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "CostBreakDown",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getAllCostBreakDown();
         },
@@ -75,13 +74,35 @@
                 costBreakDownBn :{
                     id : -1,
                     name : '',
-                    modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
+                    modifiedBy : CookieManager.getParsedData("userInfo").id,
                 },
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
                 costBreakDownList : [],
                 needToCloseNotification : true
             }
         },
         methods:{
+            setTableData(list){
+                this.costBreakDownList = list;
+                // console.log(JSON.stringify(list));
+            },
             verifyInput(which){
                 if (which==='saveCostBreakDown'){
                     if (this.costBreakDownBn.name===''){
@@ -116,7 +137,7 @@
 
                         if (res.data.code===200){
 
-                            this.costBreakDownList = res.data.list;
+                            this.$refs.th.setComTableData(res.data.list);
                             if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
 
                         } else {

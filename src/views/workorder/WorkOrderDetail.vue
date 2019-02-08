@@ -65,7 +65,7 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        <tr v-for="(wodl,i) in tableData" >
+                                        <tr v-for="(wodl,i) in workOrderDetailList" >
                                             <td>{{i+1}}</td>
                                             <td>
                                                 <table class="my-tbl" >
@@ -121,15 +121,6 @@
                                             </td>
                                             <td><i class="fas fa-edit" v-on:click="openUpdateWodModel(wodl)" ></i></td>
                                             <td><i class="fas fa-trash" v-on:click="deleteWorkOrderDetail(wodl)" ></i></td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                    <table style="font-size: 10px" >
-                                        <tbody>
-                                        <tr>
-                                            <td><button class="my-pg-btn" v-on:click="prevPage" ><i class="fas fa-arrow-left" ></i></button></td>
-                                            <td>{{currentPage}} - {{workOrderDetailList.length}}</td>
-                                            <td><button class="my-pg-btn" v-on:click="nextPage" ><i class="fas fa-arrow-right" ></i></button></td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -257,12 +248,6 @@
             }
         },
         methods:{
-            nextPage() {
-                if((this.currentPage*this.pageSize) < this.workOrderDetailList.length) this.currentPage++;
-            },
-            prevPage() {
-                if(this.currentPage > 1) this.currentPage--;
-            },
             verifyInput(which){
                 if (which==='saveWorkOrderDetail'){
                     if (this.workOrderDetail.templateOid===-1){
@@ -572,15 +557,6 @@
                     });
                 })
 
-            }
-        },
-        computed:{
-            tableData:function() {
-                return this.workOrderDetailList.filter((row, index) => {
-                    let start = (this.currentPage-1)*this.pageSize;
-                    let end = this.currentPage*this.pageSize;
-                    if(index >= start && index < end) return true;
-                });
             }
         }
     }

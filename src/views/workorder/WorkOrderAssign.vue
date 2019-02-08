@@ -97,6 +97,7 @@
                                             <th>Cost break down</th>
                                             <th>Edit</th>
                                             <th>Delete</th>
+                                            <th>Details</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -128,6 +129,7 @@
                                                 </td>
                                                 <td><i class="fas fa-edit" v-on:click="setUpdateData(wab)" ></i></td>
                                                 <td><i class="fas fa-trash" v-on:click="deleteWoAssign(wab)" ></i></td>
+                                                <td><i class="fas fa-eye" v-on:click="" ></i></td>
                                             </tr>
                                         </tbody>
                                     </table>

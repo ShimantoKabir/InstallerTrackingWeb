@@ -82,21 +82,12 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" style="font-size: 13px" >
-                                        <thead>
-                                        <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
-                                            <th>Wo PICH</th>
-                                            <th>Requester</th>
-                                            <th>Deadline</th>
-                                            <th>Remark</th>
-                                            <th>Site name</th>
-                                            <th>Site PICT</th>
-                                            <th>Status</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                :row-par-page="3"
+                                                :set-table-data="setTableData"
+                                                :header-name-list="headerNameList" >
+                                        </table-head>
                                         <tbody>
                                             <tr v-for="(wol,i) in workOrderList" >
                                                 <td>{{i+1}}</td>
@@ -134,10 +125,11 @@
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
     import CookieManager from "../../Helper/CookieManager";
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "WorkOrder",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getInitData();
         },
@@ -163,10 +155,59 @@
                 userList : [],
                 statusList : [],
                 workOrderList : [],
-                needToCloseNotification : true
+                needToCloseNotification : true,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Wo PICH',
+                        sortBy : 'woPiChName',
+                    },
+                    {
+                        name : 'Requester',
+                        sortBy : 'requesterName',
+                    },
+                    {
+                        name : 'Deadline',
+                        sortBy : 'deadLine',
+                    },
+                    {
+                        name : 'Remark',
+                        sortBy : 'remark',
+                    },
+                    {
+                        name : 'Site name',
+                        sortBy : 'siteName',
+                    },
+                    {
+                        name : 'Site PICT',
+                        sortBy : 'sitePiCt',
+                    },
+                    {
+                        name : 'Status',
+                        sortBy : 'status',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.workOrderList = list;
+            },
             getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -190,7 +231,7 @@
                         this.siteList = res.data.siteList;
                         this.userList = res.data.userList;
                         this.statusList = res.data.statusList;
-                        this.workOrderList = res.data.workOrderList;
+                        this.$refs.th.setComTableData(res.data.workOrderList);
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();

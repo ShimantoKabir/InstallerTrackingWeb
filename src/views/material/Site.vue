@@ -45,17 +45,12 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" >
-                                        <thead>
-                                        <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
-                                            <th>Address</th>
-                                            <th>Latitude</th>
-                                            <th>Longitude</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                :row-par-page="3"
+                                                :set-table-data="setTableData"
+                                            :header-name-list="headerNameList" >
+                                        </table-head>
                                         <tbody>
                                             <tr v-for="(sl,i) in siteList" >
                                                 <td>{{i+1}}</td>
@@ -127,10 +122,11 @@
 
     import Notification from "../notificaiton/Notification";
     import CookieManager from "../../Helper/CookieManager"
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "Site",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getSiteList();
         },
@@ -155,10 +151,43 @@
                 },
                 currentPlace: null,
                 siteList : [],
-                needToCloseNotification : true
+                needToCloseNotification : true,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Address',
+                        sortBy : 'address',
+                    },
+                    {
+                        name : 'Latitude',
+                        sortBy : 'lat',
+                    },
+                    {
+                        name : 'Longitude',
+                        sortBy : 'lon',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.siteList = list;
+            },
             getSiteList(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -178,7 +207,7 @@
                     console.log(JSON.stringify(res.data.list));
 
                     if (res.data.code===200){
-                        this.siteList = res.data.list;
+                        this.$refs.th.setComTableData(res.data.list);
                         if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
                     } else {
                         this.$refs.noti.setNotificationProperty({

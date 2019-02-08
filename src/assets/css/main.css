@@ -14,6 +14,7 @@ body{
 .vue-template{}
 .my-div{
     margin-top: 10px;
+    margin-bottom: 10px;
     color: gray;
     flex-direction: column;
     display: flex;
@@ -160,6 +161,7 @@ input[type=email],input[type=password],input[type=text],input[type=number],input
 /*tab*/
 .my-tab{
     margin-top: 10px;
+    margin-bottom: 10px;
     color: gray;
     flex-direction: column;
     display: flex;

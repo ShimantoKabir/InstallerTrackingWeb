@@ -318,7 +318,8 @@
     }
     .header-nav-bar-right-drp-dwn > ul > li{
         border-bottom: 1px solid #d4d4d4;
-        padding: 10px;
+        padding: 6px;
+        font-size: 13px;
     }
     .header-nav-bar-right-drp-dwn > ul > li:hover{
         background-color: #d4d4d4;
