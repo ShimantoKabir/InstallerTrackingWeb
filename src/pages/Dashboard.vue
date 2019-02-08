@@ -1,8 +1,8 @@
 <template>
     <div class="vue-template" >
-        <SideNavBar></SideNavBar>
+        <SideNavBar ref="snb" ></SideNavBar>
         <div class="my-view-con" v-bind:style="expandMyViewConStyle" >
-            <HeaderNavBar></HeaderNavBar>
+            <HeaderNavBar :on-header-toggle-btn-click="onHeaderToggleBtnClick" ></HeaderNavBar>
             <router-view></router-view>
         </div>
     </div>
@@ -26,28 +26,20 @@
               }
           }
         },
-        computed:{
-            isSideNavBarOpen(){
-                return this.$store.state.isSideNavBarOpen
-            }
-        },
-        components: {SideNavBar,HeaderNavBar},
-        watch: {
-            isSideNavBarOpen() {
-                try {
-                    let isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
-                    if (isSideNavBarOpen){
-                        this.expandMyViewConStyle.width = '100%';
-                        this.expandMyViewConStyle.marginLeft = '0%';
-                    } else {
-                        this.expandMyViewConStyle.width = '80%';
-                        this.expandMyViewConStyle.marginLeft = '20%';
-                    }
-                } catch (exp) {
-                    alert(exp);
+        methods : {
+            onHeaderToggleBtnClick(){
+                if (this.expandMyViewConStyle.width==="80%"){
+                    this.expandMyViewConStyle.width = '100%';
+                    this.expandMyViewConStyle.marginLeft = '0%';
+                    this.$refs.snb.minimizeSideNavBarStyle.width = '0%';
+                } else {
+                    this.expandMyViewConStyle.width = '80%';
+                    this.expandMyViewConStyle.marginLeft = '20%';
+                    this.$refs.snb.minimizeSideNavBarStyle.width = '20%';
                 }
             }
-        }
+        },
+        components: {SideNavBar,HeaderNavBar}
     }
 </script>
 

@@ -5,7 +5,6 @@ Vue.use(Vuex);
 
 export const store = new Vuex.Store({
     state: {
-        isSideNavBarOpen : true,
         menu : '',
         route : [],
         userInfo : '',

@@ -2,7 +2,7 @@
     <div class="vue-template" >
         <div class="header-nav-bar" >
             <div class="header-nav-bar-left" >
-                <i v-on:click="toggleSideNavBar" class="fas fa-th-list"></i>
+                <i v-on:click="onComHeaderToggleBtnClick" class="fas fa-th-list"></i>
             </div>
             <div class="header-nav-bar-right" >
                 <a class="header-nav-bar-right-drp-dwn" >
@@ -41,6 +41,14 @@
     export default {
         name: "HeaderNavBar",
         components: {Notification},
+        props: {
+            onHeaderToggleBtnClick: {
+                type: Function,
+                default() {
+                    return function () {};
+                }
+            }
+        },
         mounted(){
             this.checkWebSocketConnection();
             this.setUserName(CookieManager.getParsedData("userInfo").userName);
@@ -112,8 +120,8 @@
             openHeaderSubMenu(){
                 this.isHeaderNavSubMenuOpen = !this.isHeaderNavSubMenuOpen;
             },
-            toggleSideNavBar(){
-                this.$store.state.isSideNavBarOpen = !this.$store.state.isSideNavBarOpen;
+            onComHeaderToggleBtnClick(){
+                this.onHeaderToggleBtnClick();
             },
             logout(){
                 this.$store.state.menu = "";

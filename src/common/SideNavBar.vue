@@ -89,20 +89,6 @@
             subMenuChildHead(i){
                 this.openSnbListNumber = i;
             }
-        },
-        watch: {
-            isSideNavBarOpen() {
-                try {
-                    let isSideNavBarOpen = this.$store.state.isSideNavBarOpen;
-                    if (isSideNavBarOpen){
-                        this.minimizeSideNavBarStyle.width = '0%';
-                    } else {
-                        this.minimizeSideNavBarStyle.width = '20%';
-                    }
-                } catch (exp) {
-                    alert(exp);
-                }
-            }
         }
     }
 </script>

@@ -122,11 +122,11 @@
                     },
                     {
                         name : 'Name',
-                        sortBy : 'name',
+                        sortBy : 'userName',
                     },
                     {
                         name : 'Email',
-                        sortBy : 'email',
+                        sortBy : 'userEmail',
                     },
                     {
                         name : 'Department name',
