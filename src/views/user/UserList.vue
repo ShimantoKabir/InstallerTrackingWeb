@@ -14,17 +14,12 @@
                         </div>
                         <div class="my-div-body" >
                             <table class="my-tbl" >
-                                <thead>
-                                <tr>
-                                    <th>Serial</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Department name</th>
-                                    <th>Is Active</th>
-                                    <th>Is Approved</th>
-                                    <th>Manage</th>
-                                </tr>
-                                </thead>
+                                <table-head
+                                        ref="th"
+                                        :row-par-page="3"
+                                        :set-table-data="setTableData"
+                                        :header-name-list="headerNameList" >
+                                </table-head>
                                 <tbody>
                                 <tr v-for="(u,i) in users" >
                                     <td>{{i}}</td>
@@ -101,10 +96,11 @@
 
     import Notification from "../notificaiton/Notification";
     import CookieManager from "../../Helper/CookieManager"
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "UserList",
-        components: {Notification},
+        components: {TableHead, Notification},
         data(){
             return{
                 users : [],
@@ -118,13 +114,46 @@
                     isUserActive : '',
                     isUserApproved : ''
                 },
-                needToCloseNotification : true
+                needToCloseNotification : true,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Email',
+                        sortBy : 'email',
+                    },
+                    {
+                        name : 'Department name',
+                        sortBy : 'deptName',
+                    },
+                    {
+                        name : 'Is active',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Is approved',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Manage',
+                        sortBy : '',
+                    }
+                ]
             }
         },
         mounted(){
             this.getInitData();
         },
         methods:{
+            setTableData(list){
+                this.users = list;
+            },
             getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
@@ -143,7 +172,7 @@
 
                     if (res.data.code===200){
 
-                        this.users = res.data.userList;
+                        this.$refs.th.setComTableData(res.data.userList);
                         this.departmentList = res.data.departmentBnList;
 
                         if (this.needToCloseNotification){this.$refs.noti.closeNotification();}

@@ -83,23 +83,12 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" style="font-size: 12px" >
-                                        <thead>
-                                        <tr>
-                                            <th>Sr</th>
-                                            <th>WO</th>
-                                            <th>Dept</th>
-                                            <th>Assign to</th>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Status</th>
-                                            <th>Scope</th>
-                                            <th>Remark</th>
-                                            <th>Cost break down</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                            <th>Details</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                :row-par-page="3"
+                                                :set-table-data="setTableData"
+                                                :header-name-list="headerNameList" >
+                                        </table-head>
                                         <tbody>
                                             <tr v-for="(wab,i) in woAssignBnList" >
                                                 <td>{{i+1}}</td>
@@ -109,27 +98,9 @@
                                                 <td>{{wab.assignDate}}</td>
                                                 <td>{{wab.assignTime}}</td>
                                                 <td>{{wab.statusName}}</td>
-                                                <td>{{wab.scope}}</td>
-                                                <td>{{wab.remark}}</td>
-                                                <td>
-                                                    <table class="my-tbl" >
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Break down</th>
-                                                                <th>Cost</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr v-for="wabd in  wab.woAssignDetailBnList" >
-                                                                <td>{{wabd.name}}</td>
-                                                                <td>{{wabd.cost}}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </td>
                                                 <td><i class="fas fa-edit" v-on:click="setUpdateData(wab)" ></i></td>
                                                 <td><i class="fas fa-trash" v-on:click="deleteWoAssign(wab)" ></i></td>
-                                                <td><i class="fas fa-eye" v-on:click="" ></i></td>
+                                                <td><i class="fas fa-binoculars" v-on:click="openTblDetailModel(wab)" ></i></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -146,6 +117,56 @@
             </div>
         </div>
         <notification ref="noti" ></notification>
+        <transition name="slide-fade" >
+            <div class="my-model" v-show="isTblDetailModelOpen" >
+                <div class="container-fluid" >
+                    <div class="row justify-content-center" >
+                        <div class="col-sm-4" >
+                            <div class="my-div" >
+                                <div class="my-div-head" >
+                                    <div class="my-div-head-left" >
+                                        <h3>{{woAssign.workOrderName}}</h3>
+                                    </div>
+                                    <div class="my-div-head-right" >
+                                        <i class="fas fa-times-circle" v-on:click="closeTblDetailModel" ></i>
+                                    </div>
+                                </div>
+                                <div class="my-div-body" >
+                                    <table style="color: darkgoldenrod" >
+                                        <tbody>
+                                        <tr>
+                                            <td>Scope : </td>
+                                            <td>{{woAssign.scope}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Remark : </td>
+                                            <td>{{woAssign.remark}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="my-div-body" >
+                                    <table class="my-tbl" >
+                                        <thead>
+                                        <tr>
+                                            <th>Break down</th>
+                                            <th>Cost</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="wabd in woAssignDetailBnList" >
+                                            <td>{{wabd.name}}</td>
+                                            <td>{{wabd.cost}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </div>
 </template>
 
@@ -154,15 +175,17 @@
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
     import CookieManager from "../../Helper/CookieManager";
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "WorkOrderAssign",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getInitData();
         },
         data(){
             return{
+                isTblDetailModelOpen : false,
                 url : this.$store.state.baseUrl,
                 tabButtons : ['Assign work order','Assign list'],
                 selectedTab : 0,
@@ -170,6 +193,7 @@
                 woAssign:{
                     id : -1,
                     woId : '',
+                    workOrderName : '',
                     deptOid : -1,
                     assignTo : '',
                     assignPos : -1,
@@ -189,10 +213,66 @@
                 costBreakDownList : [],
                 woAssignDetailBnList : [],
                 userList : [],
-                isCbdModelOpen : false
+                isCbdModelOpen : false,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'WO',
+                        sortBy : 'workOrderName',
+                    },
+                    {
+                        name : 'Dept',
+                        sortBy : 'deptName',
+                    },
+                    {
+                        name : 'Assign to',
+                        sortBy : 'assignUserName',
+                    },
+                    {
+                        name : 'Date',
+                        sortBy : 'assignDate',
+                    },
+                    {
+                        name : 'Time',
+                        sortBy : 'assignTime',
+                    },
+                    {
+                        name : 'Status',
+                        sortBy : 'statusName',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Details',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.woAssignBnList = list;
+            },
+            closeTblDetailModel(){
+                this.isTblDetailModelOpen = false;
+                this.reset();
+            },
+            openTblDetailModel(w){
+                this.isTblDetailModelOpen = true;
+                this.woAssign.workOrderName = w.workOrderName;
+                this.woAssign.scope = w.scope;
+                this.woAssign.remark = w.remark;
+                this.woAssignDetailBnList = w.woAssignDetailBnList;
+            },
             userChange(){
                 this.woAssign.assignTo = this.userList[this.woAssign.assignPos].id;
                 this.woAssign.assignUserMail = this.userList[this.woAssign.assignPos].userEmail;
@@ -214,7 +294,7 @@
 
                         this.departmentBnList = res.data.departmentBnList;
                         this.workOrderList = res.data.workOrderList;
-                        this.woAssignBnList = res.data.woAssignBnList;
+                        this.$refs.th.setComTableData(res.data.woAssignBnList);
                         this.costBreakDownList = res.data.costBreakDownList;
                         this.woAssignDetailBnList = res.data.costBreakDownList;
 
@@ -380,7 +460,7 @@
             },
             reset(){
 
-                this.selectedTab = 0;
+                // this.selectedTab = 0;
                 this.woAssign.id = -1;
                 this.woAssign.woId = "";
                 this.woAssign.deptOid = -1;

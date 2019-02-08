@@ -40,17 +40,12 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" >
-                                        <thead>
-                                        <tr>
-                                            <th>Serial</th>
-                                            <th>Name</th>
-                                            <th>Duration</th>
-                                            <th>Cost</th>
-                                            <th>Task specialist</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                :row-par-page="3"
+                                                :set-table-data="setTableData"
+                                                :header-name-list="headerNameList" >
+                                        </table-head>
                                         <tbody>
                                             <tr v-for="(t,i) in taskList" >
                                                 <td>{{i+1}}</td>
@@ -132,10 +127,11 @@
 
     import Notification from "../notificaiton/Notification";
     import CookieManager from "../../Helper/CookieManager";
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "Task",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getInitData();
         },
@@ -155,10 +151,43 @@
                 taskList : [],
                 userList : [],
                 isUpdateTaskModelOpen : false,
-                needToCloseNotification : true
+                needToCloseNotification : true,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Duration',
+                        sortBy : 'duration',
+                    },
+                    {
+                        name : 'Cost',
+                        sortBy : 'cost',
+                    },
+                    {
+                        name : 'Task specialist',
+                        sortBy : 'taskSpecialist',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.taskList = list;
+            },
             verifyInput(which){
                 if (which==="save"){
                     if (this.task.name==="") {
@@ -258,7 +287,7 @@
 
                     if (res.data.code===200){
 
-                        this.taskList = res.data.taskResponse.list;
+                        this.$refs.th.setComTableData(res.data.taskResponse.list);
                         this.userList = res.data.userResponse.list;
                         
                         if (this.needToCloseNotification) {this.$refs.noti.closeNotification();}

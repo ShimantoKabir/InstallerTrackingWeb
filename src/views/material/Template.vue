@@ -46,39 +46,17 @@
                         <div v-show="selectedTab===1" class="my-tab-body" >
                             <div class="my-tab-100" >
                                 <table class="my-tbl" >
-                                    <thead>
-                                    <tr>
-                                        <th>Serial</th>
-                                        <th>Name</th>
-                                        <th>Task list</th>
-                                        <th>Edit</th>
-                                        <th>Delete</th>
-                                    </tr>
-                                    </thead>
+                                    <table-head
+                                            ref="th"
+                                            :row-par-page="3"
+                                            :set-table-data="setTableData"
+                                            :header-name-list="headerNameList" >
+                                    </table-head>
                                     <tbody>
                                     <tr v-for="(t,i) in templateList" >
                                         <td>{{i+1}}</td>
                                         <td>{{t.name}}</td>
-                                        <td>
-                                            <table class="my-tbl" >
-                                                <thead>
-                                                <tr>
-                                                    <th>Serial</th>
-                                                    <th>Name</th>
-                                                    <th>Cost</th>
-                                                    <th>Duration</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                <tr v-for="(tl,i) in t.taskList" >
-                                                    <td>{{i+1}}</td>
-                                                    <td>{{tl.name}}</td>
-                                                    <td>{{tl.cost}}</td>
-                                                    <td>{{tl.duration}}</td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
-                                        </td>
+                                        <td><i class="fas fa-binoculars" v-on:click="openTaskListModel(t)" ></i></td>
                                         <td><i class="fas fa-edit" v-on:click="setUpdateDate(t)" ></i></td>
                                         <td><i class="fas fa-trash" ></i></td>
                                     </tr>
@@ -96,6 +74,46 @@
             </div>
         </div>
         <notification ref="noti" ></notification>
+        <transition name="slide-fade" >
+            <div class="my-model" v-show="isTaskListModelOpen" >
+                <div class="container-fluid" >
+                    <div class="row justify-content-center" >
+                        <div class="col-sm-4" >
+                            <div class="my-div" >
+                                <div class="my-div-head" >
+                                    <div class="my-div-head-left" >
+                                        <h3>{{template.name}}</h3>
+                                    </div>
+                                    <div class="my-div-head-right" >
+                                        <i class="fas fa-times-circle" v-on:click="closeTaskListModel" ></i>
+                                    </div>
+                                </div>
+                                <div class="my-div-body" >
+                                    <table class="my-tbl" >
+                                        <thead>
+                                        <tr>
+                                            <th>Serial</th>
+                                            <th>Name</th>
+                                            <th>Cost</th>
+                                            <th>Duration</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="(tl,i) in taskList" >
+                                            <td>{{i+1}}</td>
+                                            <td>{{tl.name}}</td>
+                                            <td>{{tl.cost}}</td>
+                                            <td>{{tl.duration}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </div>
 </template>
 
@@ -103,15 +121,17 @@
 
     import Notification from "../notificaiton/Notification";
     import CookieManager from "../../Helper/CookieManager"
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "Template",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getInitData();
         },
         data(){
             return{
+                isTaskListModelOpen : false,
                 url : this.$store.state.baseUrl,
                 tabButtons : ['Create template','Template list'],
                 selectedTab : 0,
@@ -123,10 +143,44 @@
                 },
                 templateList : [],
                 taskList : [],
-                needToCloseNotification : true
+                needToCloseNotification : true,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Name',
+                        sortBy : 'name',
+                    },
+                    {
+                        name : 'Task list',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.templateList = list;
+            },
+            openTaskListModel(t){
+                this.isTaskListModelOpen = true;
+                this.taskList = t.taskList;
+                this.template.name = t.name;
+            },
+            closeTaskListModel(){
+                this.isTaskListModelOpen = false;
+                this.reset();
+            },
             verifyInput(which){
                 if (which==="save"){
                     if (this.template.name===""){
@@ -184,7 +238,7 @@
 
                     if (res.data.code===200){
 
-                        this.templateList = res.data.templateResponse.list;
+                        this.$refs.th.setComTableData(res.data.templateResponse.list);
                         this.taskList = res.data.taskResponse.list;
 
                         if (this.needToCloseNotification){

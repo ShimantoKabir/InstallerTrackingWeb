@@ -55,71 +55,19 @@
                             <div v-show="selectedTab===1" class="my-tab-body" >
                                 <div class="my-tab-100" >
                                     <table class="my-tbl" style="font-size: 13px" >
-                                        <thead>
-                                        <tr>
-                                            <th>SL</th>
-                                            <th>WOD</th>
-                                            <th>Task</th>
-                                            <th>Edit</th>
-                                            <th>Delete</th>
-                                        </tr>
-                                        </thead>
+                                        <table-head
+                                                ref="th"
+                                                :row-par-page="3"
+                                                :set-table-data="setTableData"
+                                                :header-name-list="headerNameList" >
+                                        </table-head>
                                         <tbody>
                                         <tr v-for="(wodl,i) in workOrderDetailList" >
                                             <td>{{i+1}}</td>
-                                            <td>
-                                                <table class="my-tbl" >
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Item</th>
-                                                            <th>Description</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>WO</td>
-                                                            <td>{{wodl.woName}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Template</td>
-                                                            <td>{{wodl.templateName}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                            <td>
-                                                <table class="my-tbl" >
-                                                    <thead>
-                                                        <tr>
-                                                            <th>SL</th>
-                                                            <th>Tk</th>
-                                                            <th>SD</th>
-                                                            <th>ED</th>
-                                                            <th>PQ</th>
-                                                            <th>DBy</th>
-                                                            <th>DLat</th>
-                                                            <th>DLon</th>
-                                                            <th>DDate</th>
-                                                            <th>ST</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(t,i) in wodl.taskList" >
-                                                            <td>{{i+1}}</td>
-                                                            <td>{{t.taskName}}</td>
-                                                            <td>{{t.startDate}}</td>
-                                                            <td>{{t.endDate}}</td>
-                                                            <td>{{t.photoQuantity}}</td>
-                                                            <td>{{t.userName}}</td>
-                                                            <td>{{t.doneLat}}</td>
-                                                            <td>{{t.doneLon}}</td>
-                                                            <td>{{t.doneDate}}</td>
-                                                            <td>{{t.statusName}}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                            <td><i class="fas fa-edit" v-on:click="openUpdateWodModel(wodl)" ></i></td>
+                                            <td>{{wodl.woName}}</td>
+                                            <td>{{wodl.templateName}}</td>
+                                            <td><i class="fas fa-binoculars" v-on:click="openUpdateWodModel(wodl,false)" ></i></td>
+                                            <td><i class="fas fa-edit" v-on:click="openUpdateWodModel(wodl,true)" ></i></td>
                                             <td><i class="fas fa-trash" v-on:click="deleteWorkOrderDetail(wodl)" ></i></td>
                                         </tr>
                                         </tbody>
@@ -198,7 +146,7 @@
                                 </div>
                                 <div class="my-div-foot" >
                                     <div class="my-div-foot-left" >
-                                        <button class="my-btn" v-on:click="updateWorkOrderDetail" >Update</button>
+                                        <button v-if="workOrderDetail.woId!==-1" class="my-btn" v-on:click="updateWorkOrderDetail" >Update</button>
                                     </div>
                                 </div>
                             </div>
@@ -215,10 +163,11 @@
     import Notification from "../notificaiton/Notification";
     import DateFormatManager from "../../Helper/DateFormatManager";
     import CookieManager from "../../Helper/CookieManager";
+    import TableHead from "../../common/TableHead";
 
     export default {
         name: "WorkOrderDetail",
-        components: {Notification},
+        components: {TableHead, Notification},
         mounted(){
             this.getInitData();
         },
@@ -243,11 +192,38 @@
                 updateTaskList: [],
                 workOrderDetailList: [],
                 needToCloseNotification : true,
-                pageSize:1,
-                currentPage:1,
+                headerNameList : [
+                    {
+                        name : 'Sr',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Work order',
+                        sortBy : 'woName',
+                    },
+                    {
+                        name : 'Template',
+                        sortBy : 'templateName',
+                    },
+                    {
+                        name : 'Task',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Edit',
+                        sortBy : '',
+                    },
+                    {
+                        name : 'Delete',
+                        sortBy : '',
+                    }
+                ],
             }
         },
         methods:{
+            setTableData(list){
+                this.workOrderDetailList = list;
+            },
             verifyInput(which){
                 if (which==='saveWorkOrderDetail'){
                     if (this.workOrderDetail.templateOid===-1){
@@ -296,7 +272,7 @@
 
                             this.workOrderList = res.data.workOrderList;
                             this.templateList = res.data.templateList;
-                            this.workOrderDetailList = res.data.workOrderDetailList;
+                            this.$refs.th.setComTableData(res.data.workOrderDetailList);
 
                             if (this.needToCloseNotification){
                                 this.$refs.noti.closeNotification();
@@ -480,10 +456,16 @@
                     this.workOrderDetail.templateOid = this.templateList[i].oId;
                 }
             },
-            openUpdateWodModel(wod){
+            openUpdateWodModel(wod,isUpdateAttempt){
 
                 this.isUpdateWodModelOpen = true;
-                this.workOrderDetail.woId = wod.woId;
+
+                if (isUpdateAttempt){
+                    this.workOrderDetail.woId = wod.woId;
+                } else {
+                    this.workOrderDetail.woId = -1;
+                }
+
                 this.workOrderDetail.templateName = wod.templateName;
                 this.workOrderDetail.woName = wod.woName;
                 this.updateTaskList = wod.taskList;
