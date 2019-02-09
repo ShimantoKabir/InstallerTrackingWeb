@@ -18,22 +18,20 @@
                 </div>
             </div>
         </div>
+        <notification ref="noti" ></notification>
     </div>
 </template>
 
 <script>
 
     import CookieManager from "../Helper/CookieManager"
+    import Notification from "../views/notificaiton/Notification";
 
     export default {
         name: "SideNavBar",
+        components: {Notification},
         mounted(){
             this.getMenu();
-        },
-        computed:{
-            isSideNavBarOpen(){
-                return this.$store.state.isSideNavBarOpen
-            }
         },
         data() {
             return{
@@ -48,6 +46,13 @@
         methods:{
             getMenu(){
 
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-spin fa-sync',
+                    bodyMsg : "Please wait, getting menu form server ... !",
+                    needOk : true,
+                });
+
                 this.$http.post(this.url+"/menu/get-by-department",{
                     departmentBn : {
                         id : CookieManager.getParsedData("userInfo").deptId
@@ -59,6 +64,7 @@
 
                     if (response.data.code===200){
 
+                        this.$refs.noti.closeNotification();
                         this.sideNavMenu = response.data.list[0].children;
                         this.$store.state.menu = response.data.list[0].children;
 

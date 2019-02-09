@@ -25,7 +25,7 @@
                                     <table class="my-tbl" >
                                         <table-head
                                                 ref="th"
-                                                :row-par-page="2"
+                                                :row-par-page="5"
                                                 :header-name-list="headerNameList"
                                                 :set-table-data="setTableData" >
                                         </table-head>

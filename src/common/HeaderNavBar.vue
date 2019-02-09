@@ -71,6 +71,13 @@
         methods:{
             getRoute(){
 
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-spin fa-sync',
+                    bodyMsg : "Please wait, getting route form server ... !",
+                    needOk : true,
+                });
+
                 this.$http.post(this.url+"/router/get-by-department",{
                     userBn : CookieManager.getParsedData("userInfo")
                 })
@@ -80,6 +87,7 @@
 
                     if (response.data.code===200){
 
+                        this.$refs.noti.closeNotification();
                         this.$store.state.route = response.data.list;
 
                     }else {

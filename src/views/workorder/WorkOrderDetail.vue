@@ -266,13 +266,15 @@
                 this.$http.get(this.url+"/work-order-detail/get-init-data")
                     .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                        console.log(JSON.stringify(res.data));
 
                         if (res.data.code===200){
 
                             this.workOrderList = res.data.workOrderList;
                             this.templateList = res.data.templateList;
-                            this.$refs.th.setComTableData(res.data.workOrderDetailList);
+                            if (res.data.workOrderDetailList) {
+                                this.$refs.th.setComTableData(res.data.workOrderDetailList);
+                            }
 
                             if (this.needToCloseNotification){
                                 this.$refs.noti.closeNotification();

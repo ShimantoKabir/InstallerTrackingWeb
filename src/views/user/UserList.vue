@@ -16,7 +16,7 @@
                             <table class="my-tbl" >
                                 <table-head
                                         ref="th"
-                                        :row-par-page="3"
+                                        :row-par-page="10"
                                         :set-table-data="setTableData"
                                         :header-name-list="headerNameList" >
                                 </table-head>
