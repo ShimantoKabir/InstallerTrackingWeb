@@ -11,10 +11,10 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {},
-    // host: "192.168.0.3", // can be overwritten by process.env.HOST
-    host: "localhost", // can be overwritten by process.env.HOST
-    // port: 3308, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
-    port: 80, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+    host: "192.168.0.3", // can be overwritten by process.env.HOST
+    // host: "localhost", // can be overwritten by process.env.HOST
+    port: 3308, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+    // port: 80, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,
     notifyOnErrors: true,
