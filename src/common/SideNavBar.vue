@@ -5,7 +5,7 @@
                 <i class="fas fa-map-marked-alt"></i> &nbsp;&nbsp; <h3>PT.GSPE</h3>
             </div>
             <div class="side-nav-bar-body" v-if="sideNavMenu" >
-                <div class="snb-child-con" v-for="(mnu,i) in sideNavMenu" >
+                <div class="snb-child-con" v-for="(mnu,i) in sideNavMenu.children" >
                     <div class="snb-child-head" v-on:click="subMenuChildHead(i)" >
                         <span><i :class="mnu.icon"></i>&nbsp; {{mnu.text}}</span>
                         <i class="fas fa-arrow-down"></i>
@@ -60,13 +60,13 @@
                 })
                 .then(response=>{
 
-                    // console.log(JSON.stringify(response.data));
+                    console.log(JSON.stringify(response.data));
 
                     if (response.data.code===200){
 
                         this.$refs.noti.closeNotification();
-                        this.sideNavMenu = response.data.list[0].children;
-                        this.$store.state.menu = response.data.list[0].children;
+                        this.sideNavMenu = response.data.menuBn;
+                        this.$store.state.menu = response.data.menuBn;
 
                     }else {
                         this.$refs.noti.setNotificationProperty({
