@@ -18,21 +18,21 @@
 
                                     <div class="menu-container">
 
-                                        <div v-for="(c,i) in menu" class="my-menu" style="border-right: 1px solid #4CAF50;" >
-                                            <p v-bind:class="{activeMenuStyle : selectedNode.i === i  && selectedNode.j===-1 && selectedNode.k===-1}"
-                                               v-on:click="selectedMenu(i,-1,-1,c,$event)" >{{c.text}}</p>
+                                        <div v-if="menu" class="my-menu" style="border-right: 1px solid #4CAF50;" >
+
+                                            <p v-bind:class="{activeMenuStyle : selectedNode.i === 0  && selectedNode.j===-1 && selectedNode.k===-1}" v-on:click="selectedMenu(0,-1,-1)" >{{menu.text}}</p>
 
                                             <div class="menu-container"  >
 
-                                                <div v-for="(m,j) in c.children" class="my-menu" >
-                                                    <p v-bind:class="{activeMenuStyle : selectedNode.i === i  && selectedNode.j===j && selectedNode.k===-1}"
-                                                       v-on:click="selectedMenu(i,j,-1,m,$event)" ><i v-bind:class="m.icon" ></i> {{m.text}}</p>
+                                                <div v-for="(m,j) in menu.children" class="my-menu" >
+
+                                                    <p v-bind:class="{activeMenuStyle : selectedNode.i === 0  && selectedNode.j===j && selectedNode.k===-1}" v-on:click="selectedMenu(0,j,-1)" ><i v-bind:class="m.icon" ></i> {{m.text}}</p>
 
                                                     <div class="menu-container" >
 
                                                         <div  v-for="(s,k) in m.children" class="my-menu" >
-                                                            <p v-bind:class="{activeMenuStyle : selectedNode.i === i  && selectedNode.j===j && selectedNode.k===k}"
-                                                               v-on:click="selectedMenu(i,j,k)" >{{s.text}}</p>
+
+                                                            <p v-bind:class="{activeMenuStyle : selectedNode.i === 0  && selectedNode.j===j && selectedNode.k===k}" v-on:click="selectedMenu(0,j,k)" >{{s.text}}</p>
 
                                                         </div>
                                                     </div>
@@ -118,7 +118,7 @@
         data(){
             return{
                 url : this.$store.state.baseUrl,
-                menu : [],
+                menu : '',
                 selectedNode : {
                     i : '',
                     j : '',
@@ -153,11 +153,11 @@
                 })
                 .then(res=>{
 
-                    // console.log(JSON.stringify(res.data));
+                    console.log(JSON.stringify(res.data));
 
                     if (res.status===200){
 
-                        this.menu = res.data.list;
+                        this.menu = res.data.menuBn;
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
                         }
@@ -187,16 +187,25 @@
                 })
             },
             selectedMenu(i,j,k){
+
                 this.selectedNode.i = i;
                 this.selectedNode.j = j;
                 this.selectedNode.k = k;
+
                 if (this.selectedNode.i !== -1 && this.selectedNode.j === -1 && this.selectedNode.k === -1) {
-                    this.selectedMenuModel = this.menu[this.selectedNode.i];
+
+                    this.selectedMenuModel = this.menu;
+
                 }else if (this.selectedNode.i !== -1 && this.selectedNode.j !== -1 && this.selectedNode.k === -1){
-                    this.selectedMenuModel = this.menu[this.selectedNode.i].children[this.selectedNode.j];
+
+                    this.selectedMenuModel = this.menu.children[this.selectedNode.j];
+
                 }else {
-                    this.selectedMenuModel = this.menu[this.selectedNode.i].children[this.selectedNode.j].children[this.selectedNode.k];
+
+                    this.selectedMenuModel = this.menu.children[this.selectedNode.j].children[this.selectedNode.k];
+
                 }
+
             },
             up(){
 
@@ -371,10 +380,18 @@
 
                 this.$http.post(this.$store.state.baseUrl+"/menu/save",{
                     userBn : CookieManager.getParsedData("userInfo"),
-                    menuBnList : this.menu,
                     menuBn : {
-                        link: this.$route.path
+                        id : this.menu.id,
+                        oId : this.menu.oId,
+                        text : this.menu.text,
+                        parentId : this.menu.parentId,
+                        rank : this.menu.rank,
+                        srl : this.menu.srl,
+                        link : this.$route.path,
+                        modifiedBy : this.menu.modifiedBy,
+                        children : this.menu.children
                     }
+
                 }).then(res=>{
 
                     console.log(JSON.stringify(res.data));
@@ -416,7 +433,7 @@
             addChild(){
                 if (this.selectedNode.i !== -1 && this.selectedNode.j === -1 && this.selectedNode.k === -1) {
                     // root
-                    this.menu[this.selectedNode.i].children.push({
+                    this.menu.children.push({
                         id: 0,
                         oId: 0,
                         text: 'New child',
@@ -428,7 +445,7 @@
                     });
                 }else if (this.selectedNode.i !== -1 && this.selectedNode.j !== -1 && this.selectedNode.k === -1){
                     // menu
-                    this.menu[this.selectedNode.i].children[this.selectedNode.j].children.push({
+                    this.menu.children[this.selectedNode.j].children.push({
                         id: 0,
                         oId: 0,
                         text: 'New child',
@@ -447,9 +464,11 @@
                 }
             },
             deleteChild(){
+
                 if (this.selectedNode.i !== -1 && this.selectedNode.j === -1 && this.selectedNode.k === -1) {
                     // root
-                    if (this.menu[this.selectedNode.i].children.length>0){
+
+                    if (this.menu.children.length>0){
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyMsg : 'Sorry, Sir/Mam you can not delete this menu cause this menu got child'
@@ -459,20 +478,20 @@
                 }else if (this.selectedNode.i !== -1 && this.selectedNode.j !== -1 && this.selectedNode.k === -1){
                     // menu
 
-                    if (this.menu[this.selectedNode.i].children[this.selectedNode.j].children.length>0){
+                    if (this.menu.children[this.selectedNode.j].children.length>0){
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyMsg : 'Sorry, Sir/Mam you can not delete this menu cause this menu got child'
                         });
                     } else {
-                        this.menu[this.selectedNode.i].children.splice(this.selectedNode.j,1);
+                        this.menu.children.splice(this.selectedNode.j,1);
                     }
 
                 }else {
 
-                    if (this.menu[this.selectedNode.i].children[this.selectedNode.j].children[this.selectedNode.k].menuPermissionList.length===0){
+                    if (this.menu.children[this.selectedNode.j].children[this.selectedNode.k].menuPermissionBnList.length===0){
 
-                        this.menu[this.selectedNode.i].children[this.selectedNode.j].children.splice(this.selectedNode.k,1);
+                        this.menu.children[this.selectedNode.j].children.splice(this.selectedNode.k,1);
 
                     } else {
                         this.$refs.noti.setNotificationProperty({
