@@ -178,15 +178,18 @@
                     userBn : CookieManager.getParsedData("userInfo")
                 })
                 .then(response=>{
+
+                    // console.log(JSON.stringify(response.data));
+
                     if (response.data.code===200){
 
                         if (repeat) {
-                            this.selectedMenu = response.data.list[0].children;
+                            this.selectedMenu = response.data.menuBn.children;
                         }else {
-                            localStorage.setItem('existingMenu',JSON.stringify(response.data.list[0].children));
+                            localStorage.setItem('existingMenu',JSON.stringify(response.data.menuBn.children));
                             this.existingMenu = JSON.parse(localStorage.getItem('existingMenu'));
                             localStorage.removeItem('existingMenu');
-                            this.selectedMenu = response.data.list[0].children;
+                            this.selectedMenu = response.data.menuBn.children;
                         }
 
                     } else {
