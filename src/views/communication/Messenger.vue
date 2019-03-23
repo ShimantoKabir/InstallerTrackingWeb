@@ -12,9 +12,9 @@
                                         <h3 v-if="selectedUserInfo.name" >{{selectedUserInfo.name}}</h3>
                                         <h3 v-else >Select user</h3>
                                         <div v-if="selectedUserInfo.pos!==-1" >
-                                            <p v-if="userList[this.selectedUserInfo.pos].isOnline!==1" style="font-size: 10px" >{{selectedUserInfo.lastPresenceDate}}</p>
+                                            <p v-if="userBnList[this.selectedUserInfo.pos].isOnline!==1" style="font-size: 10px" >{{selectedUserInfo.lastPresenceDate}}</p>
                                             <p v-else style="font-size: 10px;color: #4CAF50" >Online
-                                                <span v-if="userList[this.selectedUserInfo.pos].isTyping===1 && loggedInUserId===userList[this.selectedUserInfo.pos].forWho" > | Typing ... </span>
+                                                <span v-if="userBnList[this.selectedUserInfo.pos].isTyping===1 && loggedInUserId===userBnList[this.selectedUserInfo.pos].forWho" > | Typing ... </span>
                                             </p>
                                         </div>
                                     </div>
@@ -48,7 +48,7 @@
                             </div>
                             <div class="my-div-body-30" >
                                 <div class="people" >
-                                    <div v-for="(u,i) in userList" class="people-single"  v-on:click="userClick(u,i)" v-if="u.id!==loggedInUserId" >
+                                    <div v-for="(u,i) in userBnList" class="people-single"  v-on:click="userClick(u,i)" v-if="u.id!==loggedInUserId" >
                                         <img style="width: 20px;height: 20px" src="../../assets/img/user.png"/>
                                         <div class="user-status" >
                                             <div>
@@ -125,7 +125,7 @@
             return{
                 url : this.$store.state.baseUrl,
                 loggedInUserId : '',
-                userList : [],
+                userBnList : [],
                 userInfo : '',
                 areFriend : '',
                 activePfBtn : 0,
@@ -456,8 +456,8 @@
                         this.connected = true;
                         console.log(frame);
                         this.stompClient.subscribe("/ws-response/user/get", tick => {
-                            this.userList = JSON.parse(tick.body).list;
-                            // console.log(JSON.stringify(this.userList))
+                            this.userBnList = JSON.parse(tick.body).userBnList;
+                            console.log(JSON.stringify(this.userBnList))
                         });
                         this.stompClient.subscribe("/ws-response/conversations", tick => {
                             let conversationList = JSON.parse(tick.body).list;
