@@ -181,10 +181,10 @@
 
                         console.log(JSON.stringify(res.data));
 
-                        this.selectedUserInfo.areFriend = res.data.object.areFriend;
-                        this.selectedUserInfo.sender = res.data.object.sender;
-                        this.friendRequestId = res.data.object.id;
-                        this.conversationId = res.data.object.conversationId;
+                        this.selectedUserInfo.areFriend = res.data.friendRequestBn.areFriend;
+                        this.selectedUserInfo.sender = res.data.friendRequestBn.sender;
+                        this.friendRequestId = res.data.friendRequestBn.id;
+                        this.conversationId = res.data.friendRequestBn.conversationId;
 
                         if (res.data.code===200){
                             this.fetchConversation();
