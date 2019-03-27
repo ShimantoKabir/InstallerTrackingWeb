@@ -159,8 +159,12 @@
                         },
                         userBn : CookieManager.getParsedData("userInfo")
                     }).then(res=>{
-                        this.serverNotification = res.data.list;
+
+                        this.serverNotification = res.data.notificationBnList;
                         this.countUnseenNotification(this.serverNotification);
+
+                        // console.log(JSON.stringify(this.serverNotification));
+
                     })
                     .catch(err=>{
                         console.log(JSON.stringify(err));
@@ -176,9 +180,9 @@
                     frame => {
                         this.connected = true;
                         this.stompClient.subscribe("/ws-response/notifications", tick => {
-                            console.log(tick.body);
-                            let notificationsList = JSON.parse(tick.body).list;
-                            let obj = JSON.parse(tick.body).object;
+                            // console.log(tick.body);
+                            let notificationsList = JSON.parse(tick.body).notificationBnList;
+                            let obj = JSON.parse(tick.body).notificationBn;
                             if (notificationsList!==null){
                                 if (CookieManager.getParsedData("userInfo").id === obj.receiver){
                                     this.serverNotification = notificationsList;
@@ -238,6 +242,8 @@
                 }
             },
             countUnseenNotification(notifications){
+
+
 
                 this.unseenNotification = 0;
 

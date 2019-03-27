@@ -165,9 +165,9 @@
                     if (response.data.code===200){
 
                         this.$refs.noti.closeNotification();
-                        this.$store.state.userInfo = response.data.object;
+                        this.$store.state.userInfo = response.data.userBn;
 
-                        CookieManager.set("userInfo",JSON.stringify(response.data.object),0);
+                        CookieManager.set("userInfo",JSON.stringify(response.data.userBn),0);
                         this.$router.push({path: '/dashboard'});
 
 

@@ -12,6 +12,7 @@
 
     import SideNavBar from "./../common/SideNavBar";
     import HeaderNavBar from "./../common/HeaderNavBar";
+    import CookieManager from "../Helper/CookieManager";
 
     export default {
         name: "Dashboard",
