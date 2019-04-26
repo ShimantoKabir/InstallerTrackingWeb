@@ -17,7 +17,7 @@
                                     </tr>
                                     <tr>
                                         <td>Rank</td>
-                                        <td><input type="number" v-model="department.rank" /></td>
+                                        <td><input type="number" v-model="department.rk" /></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -39,7 +39,7 @@
                                         <tr v-for="(dl,i) in departmentList" >
                                             <td>{{i+1}}</td>
                                             <td>{{dl.name}}</td>
-                                            <td>{{dl.rank}}</td>
+                                            <td>{{dl.rk}}</td>
                                             <td><i class="fas fa-edit" v-on:click="setUpdateData(dl)" ></i></td>
                                             <td><i class="fas fa-trash" ></i></td>
                                         </tr>
@@ -79,7 +79,7 @@
                 department : {
                     id : -1,
                     name : '',
-                    rank : '',
+                    rk : '',
                 },
                 departmentList : [],
                 needToCloseNotification : true,
@@ -95,7 +95,7 @@
                             bodyMsg : 'Department name required !',
                             needOk : true
                         });
-                    } else if (this.department.rank==="") {
+                    } else if (this.department.rk==="") {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Alert',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -119,7 +119,7 @@
                             bodyMsg : 'Department name required !',
                             needOk : true
                         });
-                    } else if (this.department.rank==="") {
+                    } else if (this.department.rk==="") {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Alert',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -238,13 +238,13 @@
                 this.selectedTab  = 0;
                 this.department.id = d.id;
                 this.department.name = d.name;
-                this.department.rank = d.rank;
+                this.department.rk = d.rk;
             },
             reset(){
                 this.selectedTab = 0;
                 this.department.id = -1;
                 this.department.name = "";
-                this.department.rank = "";
+                this.department.rk = "";
             },
             update(){
 

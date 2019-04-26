@@ -21,7 +21,7 @@
                                         :header-name-list="headerNameList" >
                                 </table-head>
                                 <tbody>
-                                <tr v-for="(u,i) in users" >
+                                <tr v-for="(u,i) in userBnList" >
                                     <td>{{i}}</td>
                                     <td>{{u.userName}}</td>
                                     <td>{{u.userEmail}}</td>
@@ -103,7 +103,7 @@
         components: {TableHead, Notification},
         data(){
             return{
-                users : [],
+                userBnList : [],
                 isManageUserModelOpen : false,
                 departmentList : [],
                 isApproved : '',
@@ -152,7 +152,7 @@
         },
         methods:{
             setTableData(list){
-                this.users = list;
+                this.userBnList = list;
             },
             getInitData(){
 
@@ -172,7 +172,7 @@
 
                     if (res.data.code===200){
 
-                        this.$refs.th.setComTableData(res.data.userList);
+                        this.$refs.th.setComTableData(res.data.userBnList);
                         this.departmentList = res.data.departmentBnList;
 
                         if (this.needToCloseNotification){this.$refs.noti.closeNotification();}

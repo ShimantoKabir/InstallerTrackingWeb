@@ -385,7 +385,7 @@
                         oId : this.menu.oId,
                         text : this.menu.text,
                         parentId : this.menu.parentId,
-                        rank : this.menu.rank,
+                        rk : this.menu.rk,
                         srl : this.menu.srl,
                         link : this.$route.path,
                         modifiedBy : this.menu.modifiedBy,
@@ -439,7 +439,7 @@
                         text: 'New child',
                         icon: '',
                         parentId: 0,
-                        rank: 0,
+                        rk: 0,
                         srl: 0,
                         children: []
                     });
@@ -451,7 +451,7 @@
                         text: 'New child',
                         icon: '',
                         parentId: 0,
-                        rank: 0,
+                        rk: 0,
                         srl: 0,
                         menuPermissionList: []
                     });
