@@ -20,8 +20,6 @@ Vue.use(VueGoogleMaps, {
     }
 });
 
-// hi
-
 new Vue({
     el: '#app',
     router,

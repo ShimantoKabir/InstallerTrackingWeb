@@ -40,6 +40,15 @@
                                         <td>Password</td>
                                         <td><input required type="password" v-model="regUserDate.password"  /></td>
                                     </tr>
+                                    <tr>
+                                        <td>
+                                            Register with
+                                        </td>
+                                        <td>
+                                            <button v-on:click="onFaceBookLogin" class="my-btn"  >FB</button>
+                                            <button v-on:click="onVkLogin" class="my-btn"  >VK</button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -268,6 +277,102 @@
             },
             goForgotPasswordLayout(){
                 this.$router.push({path: '/forgot-password/1'});
+            },
+            onFaceBookLogin(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ...',
+                });
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.get(url+"/fb/login")
+                .then(response=>{
+
+                    console.log(JSON.stringify(response.data));
+
+                    if (response.data.code===200){
+
+                        window.open(response.data.facebookLoginUrl);
+                        this.$refs.noti.closeNotification();
+
+
+                    }else {
+
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : response.data.code,
+                            callBackMethod : this.onFaceBookLogin,
+                            needTryAgain : true,
+                            status : response.data.code
+                        });
+
+                    }
+
+                })
+                .catch(error=> {
+                    console.log(error.status);
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : 'Login fail',
+                        callBackMethod : this.onFaceBookLogin,
+                        needTryAgain : true,
+                        status : 400
+                    });
+                });
+
+            },
+            onVkLogin(){
+
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ...',
+                });
+
+                let url = this.$store.state.baseUrl;
+
+                this.$http.get(url+"/vk/login")
+                    .then(response=>{
+
+                        console.log(JSON.stringify(response.data));
+
+                        if (response.data.code===200){
+
+                            window.open(response.data.vkLoginUrl);
+                            this.$refs.noti.closeNotification();
+
+
+                        }else {
+
+                            this.$refs.noti.setNotificationProperty({
+                                title : 'Error',
+                                bodyIcon : 'fas fa-exclamation-circle',
+                                bodyMsg : response.data.code,
+                                callBackMethod : this.onFaceBookLogin,
+                                needTryAgain : true,
+                                status : response.data.code
+                            });
+
+                        }
+
+                    })
+                    .catch(error=> {
+                        console.log(error.status);
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : 'Login fail',
+                            callBackMethod : this.onFaceBookLogin,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    });
+
             }
         }
     }
