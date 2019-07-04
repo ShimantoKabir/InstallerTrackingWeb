@@ -228,7 +228,7 @@
                     userBn : CookieManager.getParsedData("userInfo")
                 }).then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
@@ -255,6 +255,8 @@
                             },
                             userBn : CookieManager.getParsedData("userInfo")
                         };
+
+                        console.log(JSON.stringify(req));
 
                         this.stompClient.send("/ws-request/get-notification-by-receiver",JSON.stringify(req),{});
 

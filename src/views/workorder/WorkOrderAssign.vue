@@ -182,12 +182,15 @@
     import DateFormatManager from "../../Helper/DateFormatManager";
     import CookieManager from "../../Helper/CookieManager";
     import TableHead from "../../common/TableHead";
+    import SockJS from "sockjs-client";
+    import Stomp from "webstomp-client";
 
     export default {
         name: "WorkOrderAssign",
         components: {TableHead, Notification},
         mounted(){
             this.getInitData();
+            this.connect();
         },
         data(){
             return{
@@ -198,7 +201,7 @@
                 needToCloseNotification : true,
                 woAssign:{
                     id : -1,
-                    woId : '',
+                    woId : -1,
                     workOrderName : '',
                     deptOid : -1,
                     assignTo : '',
@@ -262,12 +265,13 @@
                         sortBy : '',
                     }
                 ],
+                connected: false
             }
         },
         methods:{
             setTableData(l){
 
-                console.log(JSON.stringify(l));
+                // console.log(JSON.stringify(l));
                 this.woAssignBnList = l;
 
             },
@@ -326,7 +330,7 @@
 
                 })
                 .catch(err=>{
-                    console.log(err);
+                    // console.log(err);
                     this.$refs.noti.setNotificationProperty({
                         title : 'ERROR',
                         bodyIcon : 'fas fa-exclamation-circle',
@@ -364,7 +368,7 @@
                     })
                     .then(response=>{
 
-                        console.log(JSON.stringify(response.data));
+                        // console.log(JSON.stringify(response.data));
 
                         if (response.data.code===200){
                             this.userList = response.data.list;
@@ -381,7 +385,7 @@
                         }
                     })
                     .catch(error=> {
-                        console.log(error);
+                        // console.log(error);
                         this.$refs.noti.setNotificationProperty({
                             title : 'Processing result',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -414,7 +418,7 @@
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
@@ -428,7 +432,19 @@
                             status : res.data.code
                         });
 
+                        let req = {
+                            notificationBn : {
+                                receiver : res.data.notificationBn.receiver
+                            },
+                            userBn : CookieManager.getParsedData("userInfo")
+                        };
+
+                        console.log(JSON.stringify(req));
+
+                        this.stompClient.send("/ws-request/get-notification-by-receiver",JSON.stringify(req),{});
+
                     } else {
+
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
@@ -437,11 +453,12 @@
                             needTryAgain : true,
                             status : 400
                         });
+
                     }
 
                 })
                 .catch(err=>{
-                    console.log(JSON.stringify(err));
+                    // console.log(JSON.stringify(err));
                     this.$refs.noti.setNotificationProperty({
                         title : 'ERROR',
                         bodyIcon : 'fas fa-exclamation-circle',
@@ -473,7 +490,7 @@
 
                 // this.selectedTab = 0;
                 this.woAssign.id = -1;
-                this.woAssign.woId = "";
+                this.woAssign.woId = -1;
                 this.woAssign.deptOid = -1;
                 this.woAssign.assignTo = "";
                 this.woAssign.assignPos = -1;
@@ -505,7 +522,7 @@
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
@@ -531,7 +548,7 @@
 
                 })
                 .catch(err=>{
-                    console.log(JSON.stringify(err));
+                    // console.log(JSON.stringify(err));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
@@ -563,7 +580,7 @@
                 })
                 .then(res=>{
 
-                    console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
@@ -589,7 +606,7 @@
 
                 })
                 .catch(err=>{
-                    console.log(JSON.stringify(err));
+                    // console.log(JSON.stringify(err));
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
@@ -600,6 +617,36 @@
                     });
                 });
 
+            },
+            connect() {
+                this.socket = new SockJS(this.$store.state.webSocketBaseUrl);
+                this.stompClient = Stomp.over(this.socket);
+                this.stompClient.debug = () => {};
+                this.stompClient.connect({},
+                    frame => {
+                        this.connected = true;
+                        console.log(frame);
+                    },
+                    error => {
+                        console.log(error);
+                        this.connected = false;
+                    }
+                );
+            }
+        },
+        watch:{
+            connected : {
+                handler : function () {
+                    if (!this.connected){
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Loading',
+                            bodyIcon : 'fas fa-sync fa-spin',
+                            bodyMsg : "Connection lost,Please wait ... connecting !",
+                        });
+                    } else {
+                        this.$refs.noti.closeNotification();
+                    }
+                }
             }
         }
     }
