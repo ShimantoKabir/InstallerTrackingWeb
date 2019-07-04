@@ -1,5 +1,7 @@
 <template>
+
     <div class="vue-template" >
+
         <div class="vue-template" >
             <div class="container-fluid" >
                 <div class="row" >
@@ -116,7 +118,9 @@
                 </div>
             </div>
         </div>
+
         <notification ref="noti" ></notification>
+
         <transition name="slide-fade" >
             <div class="my-model" v-show="isTblDetailModelOpen" >
                 <div class="container-fluid" >
@@ -167,7 +171,9 @@
                 </div>
             </div>
         </transition>
+
     </div>
+
 </template>
 
 <script>
@@ -259,8 +265,11 @@
             }
         },
         methods:{
-            setTableData(list){
-                this.woAssignBnList = list;
+            setTableData(l){
+
+                console.log(JSON.stringify(l));
+                this.woAssignBnList = l;
+
             },
             closeTblDetailModel(){
                 this.isTblDetailModelOpen = false;
@@ -288,13 +297,15 @@
                 this.$http.get(this.url+"/wo-assign/init")
                 .then(res=>{
 
-                    // console.log(JSON.stringify(res.data));
+                    // console.log(JSON.stringify(res.data.woAssignBnList));
 
                     if (res.data.code===200){
 
                         this.departmentBnList = res.data.departmentBnList;
                         this.workOrderList = res.data.workOrderList;
-                        this.$refs.th.setComTableData(res.data.woAssignBnList);
+                        if (res.data.woAssignBnList){
+                            this.$refs.th.setComTableData(res.data.woAssignBnList);
+                        }
                         this.costBreakDownList = res.data.costBreakDownList;
                         this.woAssignDetailBnList = res.data.costBreakDownList;
 

@@ -36,7 +36,7 @@
                                             <td>
                                                 <select v-model="workOrder.woPiCh" >
                                                     <option v-bind:value="-1" >-- select --</option>
-                                                    <option v-for="ul in userList" v-bind:value="ul.id" >{{ul.userName}}</option>
+                                                    <option v-for="ul in userBnList" v-bind:value="ul.id" >{{ul.userEmail}}</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -59,7 +59,7 @@
                                             <td>
                                                 <select v-model="workOrder.requester" >
                                                     <option v-bind:value="-1" >-- select --</option>
-                                                    <option v-for="ul in userList" v-bind:value="ul.id" >{{ul.userName}}</option>
+                                                    <option v-for="ul in userBnList" v-bind:value="ul.id" >{{ul.userEmail}}</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -142,9 +142,9 @@
                     id : -1,
                     deadLine : '',
                     name : '',
-                    woPiCh : '',
+                    woPiCh : -1,
                     remark : '',
-                    requester : '',
+                    requester : -1,
                     siteId : '',
                     sitePic : '',
                     modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
@@ -152,7 +152,7 @@
                     sitePiCt : ''
                 },
                 siteList : [],
-                userList : [],
+                userBnList : [],
                 statusList : [],
                 workOrderList : [],
                 needToCloseNotification : true,
@@ -229,7 +229,7 @@
                     if (res.data.code===200){
 
                         this.siteList = res.data.siteList;
-                        this.userList = res.data.userList;
+                        this.userBnList = res.data.userBnList;
                         this.statusList = res.data.statusList;
                         this.$refs.th.setComTableData(res.data.workOrderList);
 
@@ -334,6 +334,9 @@
 
                             this.needToCloseNotification = false;
                             this.getInitData();
+                            this.resetWorkOrder();
+
+                            this.selectedTab = 1;
                             this.$refs.noti.setNotificationProperty({
                                 title : 'Success',
                                 bodyIcon : 'fas fa-check-circle',
@@ -369,8 +372,8 @@
                 this.workOrder.id = -1;
                 this.workOrder.name = '';
                 this.workOrder.deadLine = '';
-                this.workOrder.woPiCh = '';
-                this.workOrder.requester = '';
+                this.workOrder.woPiCh = -1;
+                this.workOrder.requester = -1;
                 this.workOrder.siteId = '';
                 this.workOrder.remark = '';
                 this.selectedTab = 0;

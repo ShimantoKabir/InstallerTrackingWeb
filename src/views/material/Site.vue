@@ -75,6 +75,7 @@
                 </div>
             </div>
         </div>
+
         <transition name="slide-fade" >
             <div class="my-model" v-show="isMapOpen" >
                 <div class="container-fluid" >
@@ -114,6 +115,7 @@
                 </div>
             </div>
         </transition>
+
         <notification ref="noti" ></notification>
     </div>
 </template>
