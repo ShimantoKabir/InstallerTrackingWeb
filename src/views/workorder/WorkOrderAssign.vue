@@ -298,20 +298,20 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.get(this.url+"/wo-assign/init")
+                this.$http.get(this.url+"/wo-assign/get-init-data")
                 .then(res=>{
 
-                    // console.log(JSON.stringify(res.data.woAssignBnList));
+                    console.log(JSON.stringify(res.data));
 
                     if (res.data.code===200){
 
                         this.departmentBnList = res.data.departmentBnList;
-                        this.workOrderList = res.data.workOrderList;
+                        this.workOrderList = res.data.workOrderBnList;
                         if (res.data.woAssignBnList){
                             this.$refs.th.setComTableData(res.data.woAssignBnList);
                         }
-                        this.costBreakDownList = res.data.costBreakDownList;
-                        this.woAssignDetailBnList = res.data.costBreakDownList;
+                        this.costBreakDownList = res.data.costBreakDownBnList;
+                        this.woAssignDetailBnList = res.data.costBreakDownBnList;
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();

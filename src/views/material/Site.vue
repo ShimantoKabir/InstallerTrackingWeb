@@ -209,8 +209,9 @@
                     console.log(JSON.stringify(res.data.list));
 
                     if (res.data.code===200){
-                        this.$refs.th.setComTableData(res.data.list);
+                        this.$refs.th.setComTableData(res.data.siteList);
                         if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
+
                     } else {
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',

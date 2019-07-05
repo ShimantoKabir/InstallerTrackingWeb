@@ -44,6 +44,7 @@
                                             <td>Status</td>
                                             <td>
                                                 <select v-model="workOrder.statusOid" >
+                                                    <option v-bind:value="-1" >-- select --</option>
                                                     <option v-for="sl in statusList" v-bind:value="sl.oId" >{{sl.name}}</option>
                                                 </select>
                                             </td>
@@ -145,10 +146,10 @@
                     woPiCh : -1,
                     remark : '',
                     requester : -1,
-                    siteId : '',
+                    siteId : -1,
                     sitePic : '',
                     modifiedBy : Number(CookieManager.getParsedData("userInfo").id),
-                    statusOid : 101,
+                    statusOid : -1,
                     sitePiCt : ''
                 },
                 siteList : [],
@@ -231,7 +232,7 @@
                         this.siteList = res.data.siteList;
                         this.userBnList = res.data.userBnList;
                         this.statusList = res.data.statusList;
-                        this.$refs.th.setComTableData(res.data.workOrderList);
+                        this.$refs.th.setComTableData(res.data.workOrderBnList);
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
@@ -374,10 +375,10 @@
                 this.workOrder.deadLine = '';
                 this.workOrder.woPiCh = -1;
                 this.workOrder.requester = -1;
-                this.workOrder.siteId = '';
+                this.workOrder.siteId = -1;
                 this.workOrder.remark = '';
                 this.selectedTab = 0;
-                this.workOrder.statusOid = '';
+                this.workOrder.statusOid = -1;
                 this.workOrder.sitePiCt = '';
             },
             setUpdateWorkOrderData(wo){

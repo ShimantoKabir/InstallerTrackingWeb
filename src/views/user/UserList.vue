@@ -61,6 +61,7 @@
                                             <td>Department</td>
                                             <td>
                                                 <select v-model="manageUserInfo.deptId" >
+                                                    <option v-bind:value="-1" >--select--</option>
                                                     <option v-bind:value="dl.oId" v-for="dl in departmentList" >{{dl.name}}</option>
                                                 </select>
                                             </td>
@@ -110,7 +111,7 @@
                 isActive : '',
                 manageUserInfo : {
                     id : '',
-                    deptId : '',
+                    deptId : -1,
                     isUserActive : '',
                     isUserApproved : ''
                 },
@@ -203,7 +204,13 @@
 
             },
             manageUser(u){
-                this.manageUserInfo.deptId = u.deptId;
+
+                if (u.deptId){
+                    this.manageUserInfo.deptId = u.deptId;
+                }else {
+                    this.manageUserInfo.deptId = -1;
+                }
+
                 if (u.isUserActive===1){
                     this.isActive = true;
                     this.manageUserInfo.isUserActive=1;

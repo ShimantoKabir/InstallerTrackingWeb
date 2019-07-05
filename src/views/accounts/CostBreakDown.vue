@@ -64,7 +64,7 @@
         name: "CostBreakDown",
         components: {TableHead, Notification},
         mounted(){
-            this.getAllCostBreakDown();
+            this.getInitData();
         },
         data(){
             return{
@@ -122,7 +122,7 @@
                     }
                 }
             },
-            getAllCostBreakDown(){
+            getInitData(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -130,37 +130,46 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.get(this.url+"/cost-break-down/get")
+                this.$http.get(this.url+"/cost-break-down/get-inti-data")
                     .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                        console.log(JSON.stringify(res.data));
 
                         if (res.data.code===200){
 
-                            this.$refs.th.setComTableData(res.data.list);
+                            this.$refs.th.setComTableData(res.data.costBreakDownList);
                             if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
 
                         } else {
+
+                            alert("hi");
+
                             this.$refs.noti.setNotificationProperty({
                                 title : 'Error',
                                 bodyIcon : 'fas fa-exclamation-circle',
                                 bodyMsg : res.data.msg,
-                                callBackMethod : this.saveCostBreakDown,
+                                callBackMethod : this.getInitData,
                                 code : res.data.code,
                             });
+
                         }
 
                     })
                     .catch(err=>{
+
+                        alert("hi");
+
                         console.log(err);
+
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : err.response.data.message,
-                            callBackMethod : this.getInitialData,
+                            callBackMethod : this.getInitData,
                             needTryAgain : true,
                             code : err.response.data.status
                         });
+
                     });
 
             },

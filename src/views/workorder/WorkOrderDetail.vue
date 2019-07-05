@@ -270,11 +270,9 @@
 
                         if (res.data.code===200){
 
-                            this.workOrderList = res.data.workOrderList;
-                            this.templateList = res.data.templateList;
-                            if (res.data.workOrderDetailList) {
-                                this.$refs.th.setComTableData(res.data.workOrderDetailList);
-                            }
+                            this.workOrderList = res.data.workOrderBnList;
+                            this.templateList = res.data.templateBnList;
+                            this.$refs.th.setComTableData(res.data.workOrderDetailBnList);
 
                             if (this.needToCloseNotification){
                                 this.$refs.noti.closeNotification();

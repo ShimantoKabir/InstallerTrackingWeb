@@ -275,7 +275,7 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.post(this.url+"/task/init-data",{
+                this.$http.post(this.url+"/task/get-init-data",{
                     userBn : CookieManager.getParsedData("userInfo"),
                     menuBn : {
                         link : this.$route.path
@@ -287,9 +287,9 @@
 
                     if (res.data.code===200){
 
-                        this.$refs.th.setComTableData(res.data.taskResponse.list);
-                        this.userList = res.data.userResponse.list;
-                        
+                        this.$refs.th.setComTableData(res.data.taskBnList);
+                        this.userList = res.data.userBnList;
+
                         if (this.needToCloseNotification) {this.$refs.noti.closeNotification();}
 
                     } else {

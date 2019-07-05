@@ -142,6 +142,7 @@
                     modifiedBy : CookieManager.getParsedData("userInfo").id,
                 },
                 templateList : [],
+                templateBnList : [],
                 taskList : [],
                 needToCloseNotification : true,
                 headerNameList : [
@@ -226,7 +227,7 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.post(this.url+"/template/init-data",{
+                this.$http.post(this.url+"/template/get-init-data",{
                     userBn : CookieManager.getParsedData("userInfo"),
                     menuBn : {
                         link : this.$route.path
@@ -238,8 +239,8 @@
 
                     if (res.data.code===200){
 
-                        this.$refs.th.setComTableData(res.data.templateResponse.list);
-                        this.taskList = res.data.taskResponse.list;
+                        this.$refs.th.setComTableData(res.data.templateBnList);
+                        this.taskList = res.data.taskBnList;
 
                         if (this.needToCloseNotification){
                             this.$refs.noti.closeNotification();
