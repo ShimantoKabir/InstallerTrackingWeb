@@ -173,6 +173,7 @@
                 departments : [],
                 users : [],
                 locations : [],
+                locationShowingInterval :'',
                 selectedDepartmentId : -1,
                 selectedUserId : -1,
                 selectedMarkerPosition : {},
@@ -345,11 +346,18 @@
                     }
                 };
 
-                this.stompClient.send("/ws-request/get-location-by-user",JSON.stringify(req),{});
+                let lThis = this;
 
+                this.locationShowingInterval = setInterval(function(){
+
+                    lThis.stompClient.send("/ws-request/get-location-by-user",JSON.stringify(req),{});
+
+                }, 3000);
 
             },
             closeMap(){
+
+                clearInterval(this.locationShowingInterval);
                 this.isMapOpen = false;
             },
             getPosition(u,index){

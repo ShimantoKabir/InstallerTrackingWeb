@@ -156,6 +156,7 @@
             return{
                 colorManager : ColorManager,
                 url : this.$store.state.baseUrl,
+                locationShowingInterval :'',
                 workOrderList : [],
                 needToCloseNotification : true,
                 woId : -1,
@@ -221,11 +222,11 @@
                 this.$http.get(this.url+"/work-order/get")
                     .then(res=>{
 
-                        // console.log(JSON.stringify(res.data));
+                        console.log(JSON.stringify(res.data));
 
                         if (res.data.code===200){
 
-                            this.workOrderList = res.data.list;
+                            this.workOrderList = res.data.workOrderBnList;
                             if (this.needToCloseNotification){
                                 this.$refs.noti.closeNotification();
                             }
@@ -271,7 +272,14 @@
                     }
                 };
 
-                this.stompClient.send("/ws-request/get-location-by-work-order",JSON.stringify(req),{});
+                let lThis = this;
+
+                this.locationShowingInterval = setInterval(function(){
+
+                    lThis.stompClient.send("/ws-request/get-location-by-work-order",JSON.stringify(req),{});
+
+                }, 3000);
+
 
             },
             connect() {
@@ -295,6 +303,7 @@
 
             },
             closeMap(){
+                clearInterval(this.locationShowingInterval);
                 this.isMapOpen = false;
             },
             getPosition(m,index){
