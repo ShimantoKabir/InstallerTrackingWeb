@@ -39,7 +39,9 @@
                 </div>
             </div>
         </div>
+
         <notification ref="noti" ></notification>
+
         <transition name="slide-fade" >
             <div class="my-model" v-show="isManageUserModelOpen" >
                 <div class="container-fluid" >
@@ -76,6 +78,27 @@
                                             <td v-else >Active</td>
                                             <td><input v-model="isActive" v-on:change="activeChange" type="checkbox" /></td>
                                         </tr>
+                                        <tr>
+                                            <td v-on:click="onOpenMap" colspan="2" ><span style="cursor: pointer;font-size: 10px;color: #4caf50" ><i class="fas fa-map-marked-alt" ></i> &nbsp; Click here and pick address using map</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Latitude</td>
+                                            <td>
+                                                <input type="text" readonly v-model="manageUserInfo.lat" >
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Longitude</td>
+                                            <td>
+                                                <input type="text" readonly v-model="manageUserInfo.lon" >
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Address</td>
+                                            <td>
+                                                <textarea readonly v-model="manageUserInfo.address" ></textarea>
+                                            </td>
+                                        </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -90,6 +113,47 @@
                 </div>
             </div>
         </transition>
+
+        <transition name="slide-fade" >
+            <div class="my-model" v-show="isMapOpen" >
+                <div class="container-fluid" >
+                    <div class="row justify-content-center" >
+                        <div class="col-sm-10" >
+                            <div class="my-div" >
+                                <div class="my-div-head" >
+                                    <div class="my-div-head-left" >
+                                        <h3 v-if="markerPosition.address" >{{markerPosition.address}}</h3>
+                                        <h3 v-else >Pick address, latitude, longitude</h3>
+                                    </div>
+                                    <div class="my-div-head-right" >
+                                        <button class="my-btn" v-on:click="placePickDone" >Done</button>
+                                    </div>
+                                </div>
+                                <div class="my-div-body" >
+                                    <div class="my-div-body-100" >
+                                        <gmap-autocomplete style="padding: 7px 10px;width: 100%;border: 1px solid lightgray;border-radius: 3px"
+                                                           @place_changed="setPlace">
+                                        </gmap-autocomplete>
+                                    </div>
+                                </div>
+                                <div class="my-div-body" >
+                                    <div class="my-div-body-100" >
+
+                                        <gmap-map :center="markerPosition" :zoom="10" style="width:100%;  height: 500px;" v-on:click="getCoordinate($event)" >
+
+                                            <gmap-marker :position="markerPosition" ></gmap-marker>
+
+                                        </gmap-map>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
     </div>
 </template>
 
@@ -113,8 +177,12 @@
                     id : '',
                     deptId : -1,
                     isUserActive : '',
-                    isUserApproved : ''
+                    isUserApproved : '',
+                    lat : '',
+                    lon : '',
+                    address : ''
                 },
+                isMapOpen : false,
                 needToCloseNotification : true,
                 headerNameList : [
                     {
@@ -145,13 +213,69 @@
                         name : 'Manage',
                         sortBy : '',
                     }
-                ]
+                ],
+                markerPosition : {
+                    lat: -6.219502,
+                    lng: 106.851511,
+                    address : ''
+                },
             }
         },
         mounted(){
             this.getInitData();
         },
         methods:{
+            onOpenMap() {
+
+                this.isMapOpen = true;
+
+            },
+            placePickDone(){
+
+                this.isMapOpen = false;
+
+                if (this.markerPosition.address){
+                    this.manageUserInfo.address = this.markerPosition.address;
+                    this.manageUserInfo.lat = this.markerPosition.lat;
+                    this.manageUserInfo.lon = this.markerPosition.lng;
+                }
+
+            },
+            setPlace(place){
+
+                this.markerPosition.lat = place.geometry.location.lat();
+                this.markerPosition.lng = place.geometry.location.lng();
+                this.markerPosition.address = place.formatted_address;
+
+            },
+            getCoordinate($event){
+                console.log(JSON.stringify($event));
+                this.markerPosition.lat = $event.latLng.lat();
+                this.markerPosition.lng = $event.latLng.lng();
+
+                this.$http.get("https://maps.googleapis.com/maps/api/geocode/json?latlng="+this.markerPosition.lat+","+this.markerPosition.lng+"&key=AIzaSyAOHSMMhB3tSoIZuf8eRqQBeJbSl0CrfUw")
+                    .then(res=>{
+                        // console.log(JSON.stringify(res));
+                        if (res.data.status==="OK"){
+                            this.markerPosition.address = res.data.results[0].formatted_address;
+                        }else {
+                            this.$refs.noti.setNotificationProperty({
+                                title : 'Error',
+                                bodyIcon : 'fas fa-exclamation-circle',
+                                bodyMsg : "Can't get address !",
+                            });
+                        }
+                    })
+                    .catch(err=>{
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : err.response.data.message,
+                            status : err.response.data.status
+                        });
+                    })
+
+            },
             setTableData(list){
                 this.userBnList = list;
             },
@@ -227,6 +351,14 @@
                 }
                 this.isManageUserModelOpen = true;
                 this.manageUserInfo.id = u.id;
+                this.manageUserInfo.address = u.address;
+                this.manageUserInfo.lon = u.lon;
+                this.manageUserInfo.lat = u.lat;
+
+                // this.markerPosition.lat = u.lat;
+                // this.markerPosition.lng = u.lon;
+                // this.markerPosition.address = u.address;
+
             },
             closeManageUserModel(){
                 this.isManageUserModelOpen = false;

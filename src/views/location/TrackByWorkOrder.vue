@@ -21,7 +21,7 @@
                                         <td>
                                             <select v-model="woId" >
                                                 <option v-bind:value="-1" >-- select --</option>
-                                                <option v-for="wl in workOrderList" v-bind:value="wl.id" >{{wl.name}}</option>
+                                                <option v-for="wl in workOrderBnList" v-bind:value="wl.id" >{{wl.name}}</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -63,11 +63,11 @@
                         <div class="my-div-body" >
                             <div class="my-div-body-100" >
                                 <gmap-map :center="center" :zoom="10" style="width:100%;  height: 500px;" >
-                                    <span v-for="(ul,i) in userLocationList" >
+                                    <span v-for="(ul,i) in userBnList" >
 
                                         <gmap-marker v-on:click="getPosition(m,index)"
                                             :key="index"
-                                            v-for="(m,index) in ul.locationList"
+                                            v-for="(m,index) in ul.locationBnList"
                                             :label="{ text: index.toString(),color : 'white'}"
                                             :draggable="true"
                                             :position="m.position">
@@ -81,12 +81,13 @@
 
                                         </gmap-marker>
 
-                                        <gmap-polyline v-bind:path.sync="ul.locationList" v-bind:options="{ strokeColor:colorManager.generateRandomColor()}"> </gmap-polyline>
+                                        <gmap-polyline v-bind:path.sync="ul.locationBnList" v-bind:options="{ strokeColor:colorManager.generateRandomColor()}"> </gmap-polyline>
 
                                     </span>
                                     <gmap-info-window @closeclick="isPosAddressInfoOpen=false"
                                                       :opened="isPosAddressInfoOpen"
                                                       :position="selectedMarkerPosition" >
+
                                         <div v-if="markerInfo" >
                                             <table class="my-tbl" >
                                                 <thead>
@@ -157,7 +158,9 @@
                 colorManager : ColorManager,
                 url : this.$store.state.baseUrl,
                 locationShowingInterval :'',
-                workOrderList : [],
+                workOrderBnList : [],
+                locationBnList : [],
+                userBnList : [],
                 needToCloseNotification : true,
                 woId : -1,
                 date : '',
@@ -169,7 +172,6 @@
                 },
                 isPosAddressInfoOpen : false,
                 selectedMarkerPosition : {},
-                userLocationList : '',
                 markerInfo : {
                     index : '',
                     date : '',
@@ -226,7 +228,7 @@
 
                         if (res.data.code===200){
 
-                            this.workOrderList = res.data.workOrderBnList;
+                            this.workOrderBnList = res.data.workOrderBnList;
                             if (this.needToCloseNotification){
                                 this.$refs.noti.closeNotification();
                             }
@@ -259,7 +261,13 @@
 
                 this.isMapOpen = true;
 
-                let req = {
+                this.$refs.noti.setNotificationProperty({
+                    title : 'Loading',
+                    bodyIcon : 'fas fa-sync fa-spin',
+                    bodyMsg : 'Please wait ... !'
+                });
+
+                this.$http.post(this.url+"/location/track-by-work-order",{
                     locationBn : {
                         createdDate : this.date
                     },
@@ -270,16 +278,97 @@
                     menuBn : {
                         link : "/track-by-work-order"
                     }
+                }).then(res=>{
+
+                    console.log(JSON.stringify(res.data));
+
+                    if (res.data.code===200){
+
+                        this.userBnList = res.data.userBnList;
+                        if (this.needToCloseNotification){
+                            this.$refs.noti.closeNotification();
+                        }
+
+                        let userBnList = [];
+
+                        for (let i = 0; i < this.userBnList.length; i++) {
+
+                            let userBn = {
+                                id : this.userBnList[i].id,
+                                locationBn : this.userBnList[i].locationBnList[this.userBnList[i].locationBnList.length-1]
+                            };
+
+                            userBnList.push(userBn);
+
+                        }
+
+                        let lThis = this;
+                        let req = {
+                            locationBn : {
+                                createdDate : this.date
+                            },
+                            userBnList : userBnList,
+                            workOrderBn : {
+                                id : this.woId
+                            },
+                            userBn : CookieManager.getParsedData("userInfo"),
+                            menuBn : {
+                                link : "/track-by-work-order"
+                            }
+                        };
+
+                        this.locationShowingInterval = setInterval(function(){
+
+                            console.log("hi");
+                            lThis.stompClient.send("/ws-request/get-location-by-work-order",JSON.stringify(req),{});
+
+                        }, 10000);
+
+                    } else {
+                        this.$refs.noti.setNotificationProperty({
+                            title : 'Error',
+                            bodyIcon : 'fas fa-exclamation-circle',
+                            bodyMsg : res.data.msg,
+                            callBackMethod : this.getInitData,
+                            needTryAgain : true,
+                            status : 400
+                        });
+                    }
+
+                }).catch(err=>{
+                    console.log(JSON.stringify(err));
+                    this.$refs.noti.setNotificationProperty({
+                        title : 'Error',
+                        bodyIcon : 'fas fa-exclamation-circle',
+                        bodyMsg : err.response.data.message,
+                        callBackMethod : this.getInitData,
+                        needTryAgain : true,
+                        status : err.response.data.status
+                    });
+                });
+
+                // let lThis = this;
+                //
+                // this.locationShowingInterval = setInterval(function(){
+                //
+                //     console.log("hi");
+                //     lThis.stompClient.send("/ws-request/get-location-by-work-order",JSON.stringify(req),{});
+                //
+                // }, 10000);
+                //
+                let request = {
+                    locationBn : {
+                        createdDate : this.date
+                    },
+                    userBnList : [],
+                    workOrderBn : {
+                        id : this.woId
+                    },
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : "/track-by-work-order"
+                    }
                 };
-
-                let lThis = this;
-
-                this.locationShowingInterval = setInterval(function(){
-
-                    lThis.stompClient.send("/ws-request/get-location-by-work-order",JSON.stringify(req),{});
-
-                }, 3000);
-
 
             },
             connect() {
@@ -291,8 +380,12 @@
                     frame => {
                         this.connected = true;
                         this.stompClient.subscribe("/ws-response/location-by-work-order", tick => {
-                            this.userLocationList = JSON.parse(tick.body).list;
-                            console.log(JSON.stringify(this.userLocationList))
+                            this.userBnList = JSON.parse(tick.body).userBnList;
+                            // console.log(JSON.stringify(this.userLocationList))
+                            // console.log(tick.body);
+                            // console.log("by");
+
+
                         });
                     },
                     error => {

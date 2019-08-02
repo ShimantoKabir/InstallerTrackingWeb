@@ -24,7 +24,7 @@ const WorkOrder = () => import('@/views/workorder/WorkOrder');
 const WorkOrderDetail = () => import('@/views/workorder/WorkOrderDetail');
 const WorkOrderAssign = () => import('@/views/workorder/WorkOrderAssign');
 const CostBreakDown = () => import('@/views/accounts/CostBreakDown');
-
+const SuperviseConfig = () => import('@/views/setup/SuperviseConfig');
 
 export default new Router({
     routes: [
@@ -184,6 +184,14 @@ export default new Router({
                     path: '/cost-break-down',
                     name: 'CostBreakDown',
                     component: CostBreakDown,
+                    meta:{
+                        requiresAuth: true
+                    }
+                },
+                {
+                    path: '/supervise-config',
+                    name: 'SuperviseConfig',
+                    component: SuperviseConfig,
                     meta:{
                         requiresAuth: true
                     }

@@ -13,8 +13,22 @@
                                     <table>
                                         <tbody>
                                         <tr>
-                                            <td>Name</td>
-                                            <td><input type="text" v-model="costBreakDownBn.name" /></td>
+                                            <td>Supervisor</td>
+                                            <td>
+                                                <select v-model="superviseConfigBn.supervisor" >
+                                                    <option v-bind:value="-1" >--select--</option>
+                                                    <option v-for="u in userList" v-bind:value="u.id" >{{u.userEmail}}</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Installer</td>
+                                            <td>
+                                                <select v-model="superviseConfigBn.installer" >
+                                                    <option v-bind:value="-1" >--select--</option>
+                                                    <option v-for="u in userList" v-bind:value="u.id" >{{u.userEmail}}</option>
+                                                </select>
+                                            </td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -30,10 +44,11 @@
                                                 :set-table-data="setTableData" >
                                         </table-head>
                                         <tbody>
-                                        <tr v-for="(cl,i) in costBreakDownList" >
+                                        <tr v-for="(sc,i) in superviseConfigBnList" >
                                             <td>{{i+1}}</td>
-                                            <td>{{cl.name}}</td>
-                                            <td><i class="fas fa-edit" v-on:click="setUpdateData(cl)" ></i></td>
+                                            <td>{{sc.supervisorEmail}}</td>
+                                            <td>{{sc.installerEmail}}</td>
+                                            <td><i class="fas fa-edit" v-on:click="setUpdateData(sc)" ></i></td>
                                             <td><i class="fas fa-trash" ></i></td>
                                         </tr>
                                         </tbody>
@@ -41,8 +56,8 @@
                                 </div>
                             </div>
                             <div v-show="selectedTab===0" class="my-tab-foot" >
-                                <button v-if="costBreakDownBn.id===-1" class="my-btn" v-on:click="verifyInput('saveCostBreakDown')" >Save</button>
-                                <button v-else class="my-btn" v-on:click="update" >Update</button>
+                                <button v-if="superviseConfigBn.id===-1" class="my-btn" v-on:click="verifyInput('create')" >Save</button>
+                                <button v-else class="my-btn" v-on:click="verifyInput('update')" >Update</button>
                                 <button class="my-btn" v-on:click="reset" >Reset</button>
                             </div>
                         </div>
@@ -61,20 +76,28 @@
     import TableHead from "../../common/TableHead";
 
     export default {
-        name: "CostBreakDown",
+        name: "SuperviseConfig",
         components: {TableHead, Notification},
-        mounted(){
+        mounted() {
             this.getInitData();
+            console.log(CookieManager.getParsedData("userInfo").id);
         },
         data(){
             return{
                 url : this.$store.state.baseUrl,
-                tabButtons : ['Create cost break down','Cost break down list'],
+                tabButtons : ['Supervise config','Supervise config list'],
                 selectedTab : 0,
-                costBreakDownBn :{
+                superviseConfigBnList : [],
+                userList : [],
+                superviseConfigBn : {
                     id : -1,
-                    name : '',
-                    modifiedBy : CookieManager.getParsedData("userInfo").id,
+                    installer : -1,
+                    installerName : '',
+                    installerEmail : '',
+                    supervisor : -1,
+                    supervisorName : '',
+                    supervisorEmail : '',
+                    modifiedBy : CookieManager.getParsedData("userInfo").id
                 },
                 headerNameList : [
                     {
@@ -82,8 +105,12 @@
                         sortBy : '',
                     },
                     {
-                        name : 'Name',
-                        sortBy : 'name',
+                        name : 'Supervisor',
+                        sortBy : 'supervisorEmail',
+                    },
+                    {
+                        name : 'Installer',
+                        sortBy : 'installerEmail',
                     },
                     {
                         name : 'Edit',
@@ -94,33 +121,28 @@
                         sortBy : '',
                     }
                 ],
-                costBreakDownList : [],
                 needToCloseNotification : true
             }
         },
         methods:{
+            tabBtnClickListener(i){
+                this.selectedTab = i;
+            },
             setTableData(list){
-                this.costBreakDownList = list;
-                // console.log(JSON.stringify(list));
+                this.superviseConfigBnList = list;
             },
             verifyInput(which){
-                if (which==='saveCostBreakDown'){
-                    if (this.costBreakDownBn.name===''){
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Alert',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Name field required !'
-                        });
-                    } else {
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Error',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : 'Would you like to submit ?',
-                            callBackMethod : this.saveCostBreakDown,
-                            needConfirmation : true
-                        });
-                    }
+
+                if (which === 'create'){
+
+                    this.create();
+
+                } else if (which === 'update') {
+
+                    this.update();
+
                 }
+
             },
             getInitData(){
 
@@ -130,19 +152,23 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.get(this.url+"/cost-break-down/get-inti-data")
-                    .then(res=>{
+                this.$http.post(this.url+"/supervise-config/get-init-data",{
+                    userBn : CookieManager.getParsedData("userInfo"),
+                    menuBn : {
+                        link : this.$route.path
+                    }
+                }).then(res=>{
 
-                        console.log(JSON.stringify(res.data));
+                        // console.log(JSON.stringify(res.data));
+                        this.userList = res.data.userList;
 
                         if (res.data.code===200){
 
-                            this.$refs.th.setComTableData(res.data.costBreakDownList);
+                            this.$refs.th.setComTableData(res.data.superviseConfigBnList);
+
                             if (this.needToCloseNotification){this.$refs.noti.closeNotification();}
 
                         } else {
-
-                            alert("hi");
 
                             this.$refs.noti.setNotificationProperty({
                                 title : 'Error',
@@ -157,7 +183,7 @@
                     })
                     .catch(err=>{
 
-                        console.log(err);
+                        console.log(JSON.stringify(err));
 
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
@@ -167,76 +193,16 @@
                             needTryAgain : true,
                             code : err.response.data.status
                         });
-
                     });
 
             },
-            tabBtnClickListener(i){
-                this.selectedTab = i;
-            },
-            saveCostBreakDown(){
-
-                this.$refs.noti.setNotificationProperty({
-                    title : 'Loading',
-                    bodyIcon : 'fas fa-sync fa-spin',
-                    bodyMsg : 'Please wait ... !'
-                });
-
-                this.$http.post(this.url+"/cost-break-down/save",{
-                    costBreakDownBn : this.costBreakDownBn,
-                    userBn : CookieManager.getParsedData("userInfo"),
-                    menuBn : {
-                        link : this.$route.path
-                    }
-                })
-                .then(res=>{
-
-                    console.log(JSON.stringify(res.data));
-
-                    if (res.data.code===200){
-
-                        this.needToCloseNotification = false;
-                        this.getAllCostBreakDown();
-                        this.reset();
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Success',
-                            bodyIcon : 'fas fa-check-circle',
-                            bodyMsg : res.data.msg,
-                            needOk : true,
-                            code : res.data.code
-                        });
-
-                    } else {
-                        this.$refs.noti.setNotificationProperty({
-                            title : 'Error',
-                            bodyIcon : 'fas fa-exclamation-circle',
-                            bodyMsg : res.data.msg,
-                            callBackMethod : this.saveCostBreakDown,
-                            needTryAgain : true,
-                            code : res.data.code
-                        });
-                    }
-
-                })
-                .catch(err=>{
-                    console.log(err);
-                    this.$refs.noti.setNotificationProperty({
-                        title : 'ERROR',
-                        bodyIcon : 'fas fa-exclamation-circle',
-                        bodyMsg : err.response.data.message,
-                        callBackMethod : this.getInitialData,
-                        needTryAgain : true,
-                        status : err.response.data.status
-                    });
-                });
-
-            },
-            reset(){
-                this.costBreakDownBn.id = -1;
-                this.costBreakDownBn.name = '';
+            setUpdateData(sc){
                 this.selectedTab = 0;
+                this.superviseConfigBn.id = sc.id;
+                this.superviseConfigBn.supervisor = sc.supervisor;
+                this.superviseConfigBn.installer = sc.installer;
             },
-            update(){
+            create(){
 
                 this.$refs.noti.setNotificationProperty({
                     title : 'Loading',
@@ -244,12 +210,12 @@
                     bodyMsg : 'Please wait ... !'
                 });
 
-                this.$http.post(this.url+"/cost-break-down/update",{
-                    costBreakDownBn : this.costBreakDownBn,
+                this.$http.post(this.url+"/supervise-config/create",{
                     userBn : CookieManager.getParsedData("userInfo"),
                     menuBn : {
                         link : this.$route.path
-                    }
+                    },
+                    superviseConfigBn : this.superviseConfigBn
                 })
                 .then(res=>{
 
@@ -258,46 +224,54 @@
                     if (res.data.code===200){
 
                         this.needToCloseNotification = false;
-                        this.getAllCostBreakDown();
-                        this.reset();
+                        this.getInitData();
                         this.$refs.noti.setNotificationProperty({
                             title : 'Success',
                             bodyIcon : 'fas fa-check-circle',
                             bodyMsg : res.data.msg,
-                            needOk : true,
-                            code : res.data.code
+                            code : res.data.code,
+                            needOk : true
                         });
 
                     } else {
+
                         this.$refs.noti.setNotificationProperty({
                             title : 'Error',
                             bodyIcon : 'fas fa-exclamation-circle',
                             bodyMsg : res.data.msg,
-                            callBackMethod : this.update,
-                            needTryAgain : true,
-                            code : res.data.code
+                            callBackMethod : this.create,
+                            code : res.data.code,
                         });
+
                     }
 
                 })
                 .catch(err=>{
-                    console.log(err);
+
+                    console.log(JSON.stringify(err));
+
                     this.$refs.noti.setNotificationProperty({
                         title : 'Error',
                         bodyIcon : 'fas fa-exclamation-circle',
                         bodyMsg : err.response.data.message,
-                        callBackMethod : this.update,
+                        callBackMethod : this.create,
                         needTryAgain : true,
                         code : err.response.data.status
                     });
                 });
 
             },
-            setUpdateData(cl){
-                this.selectedTab = 0;
-                this.costBreakDownBn.id = cl.id;
-                this.costBreakDownBn.name = cl.name;
+            update(){
+
+            },
+            reset(){
+
+                this.superviseConfigBn.id = -1;
+                this.superviseConfigBn.installer = -1;
+                this.superviseConfigBn.supervisor = -1;
+
             }
+
         }
     }
 </script>
