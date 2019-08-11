@@ -252,7 +252,7 @@
                     if (notifications[i].isSeen===0){
                         this.unseenNotification++;
                     }
-                    
+
                 }
             }
         },
@@ -277,7 +277,8 @@
                             let req = {
                                 userBn : {
                                     id : CookieManager.getParsedData("userInfo").id
-                                }
+                                },
+                                isRequestComeFromBrowser : true,
                             };
                             This.stompClient.send("/ws-request/update-user-presence",JSON.stringify(req),{});
 
